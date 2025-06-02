@@ -19,7 +19,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/db/db.h"
 #include "storage/table/table.h"
 
-UpdateStmt::UpdateStmt(Table *table, const char *attribute_name, const Value *value, FilterStmt *filter_stmt)
+UpdateStmt::UpdateStmt(Table *table, const string &attribute_name, const Value *value, FilterStmt *filter_stmt)
     : table_(table), attribute_name_(attribute_name), value_(value), filter_stmt_(filter_stmt)
 {}
 
@@ -78,8 +78,8 @@ RC UpdateStmt::create(Db *db, const UpdateSqlNode &update, Stmt *&stmt)
     }
   }
 
-  // 创建 UpdateStmt
-  stmt = new UpdateStmt(table, update.attribute_name.c_str(), &update.value, filter_stmt);
+  // 创建 UpdateStmt - 直接传递string对象避免悬空指针
+  stmt = new UpdateStmt(table, update.attribute_name, &update.value, filter_stmt);
   return RC::SUCCESS;
 }
   

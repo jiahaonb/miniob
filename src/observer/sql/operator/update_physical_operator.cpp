@@ -55,9 +55,9 @@ RC UpdatePhysicalOperator::next()
     
     // 获取要更新的字段的元数据
     const TableMeta &table_meta = table_->table_meta();
-    const FieldMeta *field_meta = table_meta.field(attribute_name_);
+    const FieldMeta *field_meta = table_meta.field(attribute_name_.c_str());
     if (nullptr == field_meta) {
-      LOG_WARN("no such field in table. table=%s, field=%s", table_->name(), attribute_name_);
+      LOG_WARN("no such field in table. table=%s, field=%s", table_->name(), attribute_name_.c_str());
       return RC::SCHEMA_FIELD_NOT_EXIST;
     }
 
@@ -85,7 +85,7 @@ RC UpdatePhysicalOperator::next()
         int len = strlen(str_val);
         if (len > field_meta->len()) {
           LOG_WARN("string value too long. field=%s, len=%d, max_len=%d", 
-                   attribute_name_, len, field_meta->len());
+                   attribute_name_.c_str(), len, field_meta->len());
           return RC::INVALID_ARGUMENT;
         }
         memset(record_data + field_offset, 0, field_meta->len());

@@ -14,8 +14,11 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include <string>
 #include "common/sys/rc.h"
 #include "sql/stmt/stmt.h"
+
+using namespace std;
 
 class Table;
 class Db;
@@ -29,7 +32,7 @@ class UpdateStmt : public Stmt
 {
 public:
   UpdateStmt() = default;
-  UpdateStmt(Table *table, const char *attribute_name, const Value *value, FilterStmt *filter_stmt);
+  UpdateStmt(Table *table, const string &attribute_name, const Value *value, FilterStmt *filter_stmt);
   ~UpdateStmt() override;
 
   StmtType type() const override { return StmtType::UPDATE; }
@@ -39,13 +42,13 @@ public:
 
 public:
   Table *table() const { return table_; }
-  const char *attribute_name() const { return attribute_name_; }
+  const string &attribute_name() const { return attribute_name_; }
   const Value *value() const { return value_; }
   FilterStmt *filter_stmt() const { return filter_stmt_; }
 
 private:
   Table *table_ = nullptr;
-  const char *attribute_name_ = nullptr;
+  string attribute_name_;
   const Value *value_ = nullptr;
   FilterStmt *filter_stmt_ = nullptr;
 };

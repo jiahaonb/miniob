@@ -10,7 +10,10 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include <string>
 #include "sql/operator/physical_operator.h"
+
+using namespace std;
 
 class Table;
 class Trx;
@@ -22,7 +25,7 @@ class Trx;
 class UpdatePhysicalOperator : public PhysicalOperator
 {
 public:
-  UpdatePhysicalOperator(Table *table, const char *attribute_name, Value value)
+  UpdatePhysicalOperator(Table *table, const string &attribute_name, Value value)
       : table_(table), attribute_name_(attribute_name), value_(value)
   {}
 
@@ -38,7 +41,7 @@ public:
 
 private:
   Table *table_ = nullptr;
-  const char *attribute_name_;
+  string attribute_name_;
   Value value_;
   Trx *trx_ = nullptr;
 }; 

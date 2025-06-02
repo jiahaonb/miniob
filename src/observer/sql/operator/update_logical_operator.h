@@ -10,21 +10,24 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include <string>
 #include "sql/operator/logical_operator.h"
+
+using namespace std;
 
 class UpdateLogicalOperator : public LogicalOperator
 {
 public:
-  UpdateLogicalOperator(Table *table, const char *attribute_name, const Value *value);
+  UpdateLogicalOperator(Table *table, const string &attribute_name, const Value *value);
 
   LogicalOperatorType type() const override { return LogicalOperatorType::UPDATE; }
 
   Table *table() const { return table_; }
-  const char *attribute_name() const { return attribute_name_; }
+  const string &attribute_name() const { return attribute_name_; }
   const Value *value() const { return value_; }
 
 private:
   Table *table_;
-  const char *attribute_name_;
+  string attribute_name_;
   const Value *value_;
 }; 
