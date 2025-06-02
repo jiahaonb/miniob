@@ -164,3 +164,40 @@ Finish dump configuration
 [2025-06-03 01:44:59.618141 pid:3123710 tid:70b9d227a6c0 ctx:50300000f2b0 INFO: sync@db.cpp:264] >> Successfully sync db. db=sys
 [2025-06-03 01:44:59.618153 pid:3123710 tid:70b9d227a6c0 ctx:50300000f2b0 INFO: execute@command_executor.cpp:94] >> sync db after ddl. rc=0
 [2025-06-03 01:44:59.618235 pid:3123710 tid:70b9d227a6c0 ctx:50300000f2b0 INFO: handle_event@sql_task_handler.cpp:46] >> write result return SUCCESS
+[2025-06-03 01:53:17.369941 pid:3123710 tid:70b9d75417c0 ctx:0 WARN: serve@server.cpp:271] >> [listen socket] poll error. fd = 7, ret = -1, error=Interrupted system call
+[2025-06-03 01:53:17.370063 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: await_stop@one_thread_per_connection_thread_handler.cpp:170] >> begin to await stop one thread per connection thread handler
+[2025-06-03 01:53:17.370242 pid:3123710 tid:70b9d0f706c0 ctx:0 INFO: quit_thread_func@main.cpp:153] >> Receive signal: 1
+[2025-06-03 01:53:17.370346 pid:3123710 tid:70b9d0f706c0 ctx:0 INFO: shutdown@server.cpp:299] >> NetServer shutting down
+[2025-06-03 01:53:17.370669 pid:3123710 tid:70b9d227a6c0 ctx:0 INFO: read_event@plain_communicator.cpp:82] >> The peer has been closed 127.0.0.1:8354
+[2025-06-03 01:53:17.370805 pid:3123710 tid:70b9d227a6c0 ctx:0 ERROR: operator()@one_thread_per_connection_thread_handler.cpp:98] >> handle error. rc = IOERR_CLOSE
+[2025-06-03 01:53:17.370872 pid:3123710 tid:70b9d227a6c0 ctx:0 INFO: operator()@one_thread_per_connection_thread_handler.cpp:103] >> worker thread stop. communicator = 0x50b000000930
+[2025-06-03 01:53:17.371235 pid:3123710 tid:70b9d227a6c0 ctx:0 INFO: close_connection@one_thread_per_connection_thread_handler.cpp:154] >> close connection. communicator = 0x50b000000930
+[2025-06-03 01:53:17.470209 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: await_stop@one_thread_per_connection_thread_handler.cpp:174] >> end to await stop one thread per connection thread handler
+[2025-06-03 01:53:17.470271 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: await_stop@one_thread_per_connection_thread_handler.cpp:170] >> begin to await stop one thread per connection thread handler
+[2025-06-03 01:53:17.470280 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: await_stop@one_thread_per_connection_thread_handler.cpp:174] >> end to await stop one thread per connection thread handler
+[2025-06-03 01:53:17.470292 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: serve@server.cpp:293] >> NetServer quit
+[2025-06-03 01:53:17.470299 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: main@main.cpp:200] >> Server stopped
+[2025-06-03 01:53:17.470399 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: sync@table.cpp:540] >> Sync table over. table=date_table2
+[2025-06-03 01:53:17.470408 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: sync@db.cpp:240] >> Successfully sync table db:sys, table:date_table2.
+[2025-06-03 01:53:17.470464 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: sync@table.cpp:540] >> Sync table over. table=date_table
+[2025-06-03 01:53:17.470470 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: sync@db.cpp:240] >> Successfully sync table db:sys, table:date_table.
+[2025-06-03 01:53:17.470576 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: sync@table.cpp:540] >> Sync table over. table=jiahao
+[2025-06-03 01:53:17.470583 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: sync@db.cpp:240] >> Successfully sync table db:sys, table:jiahao.
+[2025-06-03 01:53:17.478124 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: sync@db.cpp:245] >> double write buffer flush pages ret=SUCCESS
+[2025-06-03 01:53:17.478279 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: flush_meta@db.cpp:378] >> Successfully write db meta file. db=sys, file=miniob/db/sys/sys.db.tmp, check_point_lsn=0
+[2025-06-03 01:53:17.478305 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: sync@db.cpp:264] >> Successfully sync db. db=sys
+[2025-06-03 01:53:17.478371 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: clear_pages@double_write_buffer.cpp:210] >> clear pages in double write buffer. file name=miniob/db/sys/date_table2.data, page count=0
+[2025-06-03 01:53:17.478385 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: close_file@disk_buffer_pool.cpp:307] >> Successfully close file 9:miniob/db/sys/date_table2.data.
+[2025-06-03 01:53:17.478412 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: ~DiskBufferPool@disk_buffer_pool.cpp:226] >> disk buffer pool exit
+[2025-06-03 01:53:17.478424 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: ~Table@table.cpp:52] >> Table has been closed: date_table2
+[2025-06-03 01:53:17.478461 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: clear_pages@double_write_buffer.cpp:210] >> clear pages in double write buffer. file name=miniob/db/sys/date_table.data, page count=0
+[2025-06-03 01:53:17.478469 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: close_file@disk_buffer_pool.cpp:307] >> Successfully close file 6:miniob/db/sys/date_table.data.
+[2025-06-03 01:53:17.478480 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: ~DiskBufferPool@disk_buffer_pool.cpp:226] >> disk buffer pool exit
+[2025-06-03 01:53:17.478486 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: ~Table@table.cpp:52] >> Table has been closed: date_table
+[2025-06-03 01:53:17.478549 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: clear_pages@double_write_buffer.cpp:210] >> clear pages in double write buffer. file name=miniob/db/sys/jiahao.data, page count=0
+[2025-06-03 01:53:17.478556 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: close_file@disk_buffer_pool.cpp:307] >> Successfully close file 5:miniob/db/sys/jiahao.data.
+[2025-06-03 01:53:17.478569 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: ~DiskBufferPool@disk_buffer_pool.cpp:226] >> disk buffer pool exit
+[2025-06-03 01:53:17.478579 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: ~Table@table.cpp:52] >> Table has been closed: jiahao
+[2025-06-03 01:53:17.478586 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: ~Db@db.cpp:45] >> Db has been closed: sys
+[2025-06-03 01:53:17.489374 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: cleanup@mem_pool.h:223] >> Successfully do cleanup, this->name:BufPool.
+[2025-06-03 01:53:17.489473 pid:3123710 tid:70b9d75417c0 ctx:0 INFO: cleanup_util@init.cpp:229] >> Shutdown Cleanly!
