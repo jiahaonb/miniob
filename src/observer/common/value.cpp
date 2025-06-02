@@ -12,6 +12,7 @@ See the Mulan PSL v2 for more details. */
 // Created by WangYunlai on 2023/06/28.
 //
 
+#include <regex>
 #include <iomanip>
 #include "common/value.h"
 
@@ -21,29 +22,42 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/string.h"
 #include "common/log/log.h"
 
+Value::Value(NullValue) : attr_type_(AttrType::NULLS) { set_null(); }
+
 Value::Value(int val) { set_int(val); }
 
 Value::Value(float val) { set_float(val); }
 
 Value::Value(bool val) { set_boolean(val); }
 
-Value::Value(Date val) { set_date(val); }
+Value::Value(const char *s, int len /*= 0*/)
+{
+  if (OB_SUCC(parse_vector_from_string(s, value_.vector_value_, length_))) {
+    set_vector();
+  } else {
+    set_string(s, len);
+  }
+}
 
-Value::Value(const char *s, int len /*= 0*/) { set_string(s, len); }
+Value::Value(const vector<float> &values) { set_vector(values); }
 
 Value::Value(const Value &other)
 {
   this->attr_type_ = other.attr_type_;
   this->length_    = other.length_;
   this->own_data_  = other.own_data_;
-  switch (this->attr_type_) {
-    case AttrType::CHARS: {
-      set_string_from_other(other);
-    } break;
-
-    default: {
-      this->value_ = other.value_;
-    } break;
+  this->is_null_   = other.is_null_;
+  //  null 值没必要拷贝 
+  if (!this->is_null_) {
+    switch (this->attr_type_) {
+      case AttrType::CHARS:
+      case AttrType::TEXTS: {
+        set_string_from_other(other);
+      } break;
+      default: {
+        this->value_ = other.value_;
+      } break;
+    }
   }
 }
 
@@ -52,9 +66,12 @@ Value::Value(Value &&other)
   this->attr_type_ = other.attr_type_;
   this->length_    = other.length_;
   this->own_data_  = other.own_data_;
-  this->value_     = other.value_;
-  other.own_data_  = false;
-  other.length_    = 0;
+  this->is_null_   = other.is_null_;
+  if (!this->is_null_) {
+    this->value_ = other.value_;
+  }
+  other.own_data_ = false;
+  other.length_   = 0;
 }
 
 Value &Value::operator=(const Value &other)
@@ -66,14 +83,17 @@ Value &Value::operator=(const Value &other)
   this->attr_type_ = other.attr_type_;
   this->length_    = other.length_;
   this->own_data_  = other.own_data_;
-  switch (this->attr_type_) {
-    case AttrType::CHARS: {
-      set_string_from_other(other);
-    } break;
-
-    default: {
-      this->value_ = other.value_;
-    } break;
+  this->is_null_   = other.is_null_;
+  if (!this->is_null_) {
+    switch (this->attr_type_) {
+      case AttrType::CHARS:
+      case AttrType::TEXTS: {
+        set_string_from_other(other);
+      } break;
+      default: {
+        this->value_ = other.value_;
+      } break;
+    }
   }
   return *this;
 }
@@ -87,9 +107,12 @@ Value &Value::operator=(Value &&other)
   this->attr_type_ = other.attr_type_;
   this->length_    = other.length_;
   this->own_data_  = other.own_data_;
-  this->value_     = other.value_;
-  other.own_data_  = false;
-  other.length_    = 0;
+  this->is_null_   = other.is_null_;
+  if (!this->is_null_) {
+    this->value_ = other.value_;
+  }
+  other.own_data_ = false;
+  other.length_   = 0;
   return *this;
 }
 
@@ -97,17 +120,19 @@ void Value::reset()
 {
   switch (attr_type_) {
     case AttrType::CHARS:
+    case AttrType::TEXTS: {
       if (own_data_ && value_.pointer_value_ != nullptr) {
         delete[] value_.pointer_value_;
         value_.pointer_value_ = nullptr;
       }
-      break;
+    } break;
     default: break;
   }
 
   attr_type_ = AttrType::UNDEFINED;
   length_    = 0;
   own_data_  = false;
+  is_null_   = false;
 }
 
 void Value::set_data(char *data, int length)
@@ -116,9 +141,8 @@ void Value::set_data(char *data, int length)
     case AttrType::CHARS: {
       set_string(data, length);
     } break;
-    case AttrType::DATES: {
-      value_.int_value_ = *(Date *)data;
-      length_           = length;
+    case AttrType::TEXTS: {
+      set_text(data, length);
     } break;
     case AttrType::INTS: {
       value_.int_value_ = *(int *)data;
@@ -131,6 +155,14 @@ void Value::set_data(char *data, int length)
     case AttrType::BOOLEANS: {
       value_.bool_value_ = *(int *)data != 0;
       length_            = length;
+    } break;
+    case AttrType::DATES: {
+      value_.int_value_ = *(int *)data;
+      length_           = length;
+    } break;
+    case AttrType::VECTORS: {
+      value_.vector_value_ = (float *)data;
+      length_              = length;
     } break;
     default: {
       LOG_WARN("unknown data type: %d", attr_type_);
@@ -160,14 +192,19 @@ void Value::set_boolean(bool val)
   value_.bool_value_ = val;
   length_            = sizeof(val);
 }
-void Value::set_date(Date val)
+
+void Value::set_date(int val)
 {
   reset();
-  attr_type_ = AttrType::DATES;
-  value_.date_value_ = val;
-  length_ = sizeof(val);
+  attr_type_        = AttrType::DATES;
+  value_.int_value_ = val;
+  length_           = sizeof(val);
 }
-
+void Value::set_vector()
+{
+  attr_type_ = AttrType::VECTORS;
+  own_data_  = true;
+}
 void Value::set_string(const char *s, int len /*= 0*/)
 {
   reset();
@@ -189,14 +226,53 @@ void Value::set_string(const char *s, int len /*= 0*/)
   }
 }
 
+void Value::set_text(const char *s, int len /*= 65535*/)
+{
+  reset();
+  attr_type_ = AttrType::TEXTS;
+  if (s == nullptr) {
+    value_.pointer_value_ = nullptr;
+    length_               = 0;
+  } else {
+    own_data_ = true;
+    if (len > 0) {
+      len = strnlen(s, len);
+    } else {
+      len = strlen(s);
+    }
+    value_.pointer_value_ = new char[len + 1];
+    length_               = len;
+    memcpy(value_.pointer_value_, s, len);
+    value_.pointer_value_[len] = '\0';
+  }
+}
+
+void Value::set_vector(float *array, int length)
+{
+  attr_type_           = AttrType::VECTORS;
+  length_              = length;
+  value_.vector_value_ = array;
+
+  own_data_ = true;
+}
+
+void Value::set_vector(const vector<float> &val)
+{
+  attr_type_           = AttrType::VECTORS;
+  length_              = val.size() * sizeof(float);
+  value_.vector_value_ = new float[length_];
+  for (size_t i = 0; i < val.size(); i++) {
+    value_.vector_value_[i] = val[i];
+  }
+
+  own_data_ = true;
+}
+
 void Value::set_value(const Value &value)
 {
   switch (value.attr_type_) {
     case AttrType::INTS: {
       set_int(value.get_int());
-    } break;
-    case AttrType::DATES: {
-      set_date(value.get_date());
     } break;
     case AttrType::FLOATS: {
       set_float(value.get_float());
@@ -207,6 +283,12 @@ void Value::set_value(const Value &value)
     case AttrType::BOOLEANS: {
       set_boolean(value.get_boolean());
     } break;
+    case AttrType::DATES: {
+      set_date(value.get_int());
+    } break;
+    case AttrType::TEXTS: {
+      set_text(value.get_string().c_str());
+    } break;
     default: {
       ASSERT(false, "got an invalid value type");
     } break;
@@ -215,8 +297,8 @@ void Value::set_value(const Value &value)
 
 void Value::set_string_from_other(const Value &other)
 {
-  ASSERT(attr_type_ == AttrType::CHARS, "attr type is not CHARS");
-  if (own_data_ && other.value_.pointer_value_ != nullptr && length_ != 0) {
+  ASSERT(attr_type_ == AttrType::CHARS || attr_type() == AttrType::TEXTS, "attr type is not CHARS or TEXTS");
+  if (own_data_ && other.value_.pointer_value_ != nullptr) {
     this->value_.pointer_value_ = new char[this->length_ + 1];
     memcpy(this->value_.pointer_value_, other.value_.pointer_value_, this->length_);
     this->value_.pointer_value_[this->length_] = '\0';
@@ -226,8 +308,12 @@ void Value::set_string_from_other(const Value &other)
 const char *Value::data() const
 {
   switch (attr_type_) {
-    case AttrType::CHARS: {
+    case AttrType::CHARS:
+    case AttrType::TEXTS: {
       return value_.pointer_value_;
+    } break;
+    case AttrType::VECTORS: {
+      return (char *)value_.vector_value_;
     } break;
     default: {
       return (const char *)&value_;
@@ -237,6 +323,9 @@ const char *Value::data() const
 
 string Value::to_string() const
 {
+  if (is_null_) {
+    return "NULL";
+  }
   string res;
   RC     rc = DataType::type_instance(this->attr_type_)->to_string(*this, res);
   if (OB_FAIL(rc)) {
@@ -251,21 +340,31 @@ int Value::compare(const Value &other) const
   return DataType::type_instance(this->attr_type_)->compare(*this, other);
 }
 
+bool Value::LIKE(const Value &other) const
+{
+  const std::string  left_str  = this->get_string();
+  const std::string &right_str = other.get_string();
+
+  // 将 SQL 通配符转换为正则表达式
+  std::string regex_str = std::regex_replace(right_str, std::regex("%"), ".*");
+  regex_str             = std::regex_replace(regex_str, std::regex("_"), ".");
+
+  std::regex regex_pattern(regex_str);
+  return std::regex_match(left_str, regex_pattern);
+}
+
 int Value::get_int() const
 {
   switch (attr_type_) {
-    case AttrType::CHARS: {
+    case AttrType::CHARS:
+    case AttrType::TEXTS: {
       try {
-        return (int)(stol(value_.pointer_value_));
+        return (int)(std::stol(value_.pointer_value_));
       } catch (exception const &ex) {
         LOG_TRACE("failed to convert string to number. s=%s, ex=%s", value_.pointer_value_, ex.what());
         return 0;
       }
     }
-    case AttrType::DATES: {
-      return (int)(value_.int_value_);
-    } break;
-
     case AttrType::INTS: {
       return value_.int_value_;
     }
@@ -274,6 +373,10 @@ int Value::get_int() const
     }
     case AttrType::BOOLEANS: {
       return (int)(value_.bool_value_);
+    }
+    case AttrType::DATES: {
+      LOG_TRACE("failed to convert date to number. s=%d", value_.int_value_);
+      return 0;
     }
     default: {
       LOG_WARN("unknown data type. type=%d", attr_type_);
@@ -286,16 +389,14 @@ int Value::get_int() const
 float Value::get_float() const
 {
   switch (attr_type_) {
-    case AttrType::CHARS: {
+    case AttrType::CHARS:
+    case AttrType::TEXTS: {
       try {
-        return stof(value_.pointer_value_);
+        return std::stof(value_.pointer_value_);
       } catch (exception const &ex) {
         LOG_TRACE("failed to convert string to float. s=%s, ex=%s", value_.pointer_value_, ex.what());
         return 0.0;
       }
-    } break;
-    case AttrType::DATES: {
-      return float(value_.int_value_);
     } break;
     case AttrType::INTS: {
       return float(value_.int_value_);
@@ -306,6 +407,10 @@ float Value::get_float() const
     case AttrType::BOOLEANS: {
       return float(value_.bool_value_);
     } break;
+    case AttrType::DATES: {
+      LOG_TRACE("failed to convert date to float. s=%d", value_.int_value_);
+      return 0;
+    }
     default: {
       LOG_WARN("unknown data type. type=%d", attr_type_);
       return 0;
@@ -313,37 +418,21 @@ float Value::get_float() const
   }
   return 0;
 }
-Date Value::get_date() const
-{
-  switch (attr_type_) {
-    case AttrType::CHARS: {
-      Value tmp;
-      Value::cast_to(*this, AttrType::DATES, tmp);
-      return tmp.get_int();
-    } break;
-    case AttrType::DATES: {
-      return value_.date_value_;
-    }
-    default: {
-      LOG_WARN("unknown data type. type=%d", attr_type_);
-      return INT32_MAX;
-    }
-  }
-}
 
 string Value::get_string() const { return this->to_string(); }
 
 bool Value::get_boolean() const
 {
   switch (attr_type_) {
-    case AttrType::CHARS: {
+    case AttrType::CHARS:
+    case AttrType::TEXTS: {
       try {
-        float val = stof(value_.pointer_value_);
+        float val = std::stof(value_.pointer_value_);
         if (val >= EPSILON || val <= -EPSILON) {
           return true;
         }
 
-        int int_val = stol(value_.pointer_value_);
+        int int_val = std::stol(value_.pointer_value_);
         if (int_val != 0) {
           return true;
         }
@@ -353,9 +442,6 @@ bool Value::get_boolean() const
         LOG_TRACE("failed to convert string to float or integer. s=%s, ex=%s", value_.pointer_value_, ex.what());
         return value_.pointer_value_ != nullptr;
       }
-    } break;
-    case AttrType::DATES: {
-      return value_.date_value_;
     } break;
     case AttrType::INTS: {
       return value_.int_value_ != 0;
@@ -367,6 +453,10 @@ bool Value::get_boolean() const
     case AttrType::BOOLEANS: {
       return value_.bool_value_;
     } break;
+    case AttrType::DATES: {
+      LOG_TRACE("failed to convert date to boolean. s=%d", value_.int_value_);
+      return false;
+    }
     default: {
       LOG_WARN("unknown data type. type=%d", attr_type_);
       return false;
@@ -375,14 +465,46 @@ bool Value::get_boolean() const
   return false;
 }
 
-void Value::set_null(bool is_null)
+int Value::get_date() const
 {
-  AttrType attr_type = attr_type_;
-  bool own_data      = own_data_;
-  if(is_null) {
-    reset();
-    attr_type_ = attr_type;
-    own_data_  = own_data;
+  if (attr_type_ == AttrType::DATES) {
+    return value_.int_value_;
+  } else {
+    return 0;
   }
-  is_null_ = is_null;
+}
+
+RC Value::borrow_text(const Value &v)
+{
+  ASSERT(v.attr_type() != AttrType::TEXTS, "Only text type can be borrowed! ");
+  if (v.length_ > 65535) {
+    return RC::VALUE_TOO_LONG;
+  }
+  reset();
+  attr_type_            = AttrType::TEXTS;
+  value_.pointer_value_ = v.value_.pointer_value_;
+  length_               = v.length_;
+  return RC::SUCCESS;
+}
+
+std::vector<float> Value::get_vector() const
+{
+  assert(attr_type_ == AttrType::VECTORS);
+  std::vector<float> vector(get_vector_length());
+  for (long unsigned int i = 0; i < vector.size(); ++i) {
+    vector[i] = get_vector_element(i);
+  }
+  return vector;
+}
+
+int Value::get_vector_length() const
+{
+  assert(attr_type_ == AttrType::VECTORS);
+  return length_ / sizeof(float);
+}
+
+float Value::get_vector_element(int i) const
+{
+  assert(attr_type_ == AttrType::VECTORS);
+  return value_.vector_value_[i];
 }

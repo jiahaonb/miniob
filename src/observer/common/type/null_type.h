@@ -12,30 +12,16 @@ See the Mulan PSL v2 for more details. */
 
 #include "common/type/data_type.h"
 
-/**
- * @brief 向量类型
- * @ingroup DataType
- */
-class VectorType : public DataType
+class NullType : public DataType
 {
 public:
-  VectorType() : DataType(AttrType::VECTORS) {}
+  NullType() : DataType(AttrType::NULLS) {}
 
-  virtual ~VectorType() = default;
+  ~NullType() override {}
 
   int compare(const Value &left, const Value &right) const override;
 
-  RC cast_to(const Value &val, AttrType type, Value &result, bool allow_type_promotion = true) const override;
-
-  RC set_value_from_str(Value &val, const string &data) const override;
-
-  int cast_cost(AttrType type) override;
-
   RC to_string(const Value &val, string &result) const override;
 
-  RC add(const Value &left, const Value &right, Value &result) const override;
-
-  RC subtract(const Value &left, const Value &right, Value &result) const override;
-
-  RC multiply(const Value &left, const Value &right, Value &result) const override;
+  RC cast_to(const Value &val, AttrType type, Value &result, bool allow_type_promotion = true) const override;
 };

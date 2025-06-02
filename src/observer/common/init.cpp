@@ -129,10 +129,7 @@ void cleanup_log()
   }
 }
 
-int prepare_init_seda()
-{
-  return 0;
-}
+int prepare_init_seda() { return 0; }
 
 int init_global_objects(ProcessParam *process_param, Ini &properties)
 {

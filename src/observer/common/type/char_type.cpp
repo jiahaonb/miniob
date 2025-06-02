@@ -8,10 +8,14 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details. */
 
+#include <cmath>
+
+#include "common/utils.h"
 #include "common/lang/comparator.h"
 #include "common/log/log.h"
 #include "common/type/char_type.h"
 #include "common/value.h"
+#include "common/type/attr_type.h"
 
 int CharType::compare(const Value &left, const Value &right) const
 {
@@ -26,27 +30,58 @@ RC CharType::set_value_from_str(Value &val, const string &data) const
   return RC::SUCCESS;
 }
 
-RC CharType::cast_to(const Value &val, AttrType type, Value &result) const
+RC CharType::cast_to(const Value &val, AttrType type, Value &result, bool allow_type_promotion) const
 {
   switch (type) {
+    case AttrType::TEXTS: {
+      if (val.length() > 65535) {
+        return RC::VALUE_TOO_LONG;
+      }
+      result.set_text(val.value_.pointer_value_, val.length_);
+    } break;
     case AttrType::DATES: {
-      Value tmp;
-      tmp.set_date(0);
-      string data = val.get_string();
-      DataType::type_instance(val.attr_type())->set_value_from_str(tmp, data);
+      int date_val;
+      RC  rc = parse_date(val.value_.pointer_value_, date_val);
+      if (rc != RC::SUCCESS) {
+        return rc;
+      }
+      result.set_date(date_val);
     } break;
     case AttrType::INTS: {
-      int to = int(common::db_str_to_float(val.value_.pointer_value_));
-      result.set_int(to);
-      break;
-    }
+      float float_val;
+      RC    rc = parse_float_prefix(val.value_.pointer_value_, float_val);
+      if (rc != RC::SUCCESS) {
+        return rc;
+      }
+      int int_val = static_cast<int>(float_val);
+      // 是整数
+      if (int_val == float_val || !allow_type_promotion) {
+        result.set_int(int_val);
+      } else {
+        // 为浮点数
+        result.set_float(float_val);
+      }
+    } break;
     case AttrType::FLOATS: {
-      float to = common::db_str_to_float(val.value_.pointer_value_);
-      result.set_float(to);
-      break;
-    }
-    
-    
+      float float_val;
+      RC    rc = parse_float_prefix(val.value_.pointer_value_, float_val);
+      if (rc != RC::SUCCESS) {
+        return rc;
+      }
+      result.set_float(float_val);
+    } break;
+    case AttrType::VECTORS: {
+      float *array  = nullptr;
+      int    length = 0;
+
+      // 解析字符串为 float 数组
+      RC rc = parse_vector_from_string(val.value_.pointer_value_, array, length);
+      if (rc != RC::SUCCESS) {
+        return rc;
+      }
+
+      result.set_vector(array, length);
+    } break;
     default: return RC::UNIMPLEMENTED;
   }
   return RC::SUCCESS;
@@ -54,8 +89,17 @@ RC CharType::cast_to(const Value &val, AttrType type, Value &result) const
 
 int CharType::cast_cost(AttrType type)
 {
-  if (type == AttrType::CHARS || type == AttrType::INTS || type == AttrType::FLOATS ) {
+  if (type == AttrType::CHARS || type == AttrType::TEXTS) {
     return 0;
+  }
+  if (type == AttrType::DATES) {
+    return 1;
+  }
+  if (type == AttrType::INTS) {
+    return 1;
+  }
+  if (type == AttrType::FLOATS) {
+    return 1;
   }
   return INT32_MAX;
 }

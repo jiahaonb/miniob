@@ -8,6 +8,8 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details. */
 
+#include <cmath>
+
 #include "common/lang/comparator.h"
 #include "common/lang/sstream.h"
 #include "common/log/log.h"
@@ -44,12 +46,11 @@ RC FloatType::multiply(const Value &left, const Value &right, Value &result) con
 RC FloatType::divide(const Value &left, const Value &right, Value &result) const
 {
   if (right.get_float() > -EPSILON && right.get_float() < EPSILON) {
-    // NOTE:
-    // 设置为浮点数最大值是不正确的。通常的做法是设置为NULL，但是当前的miniob没有NULL概念，所以这里设置为浮点数最大值。
-    result.set_float(numeric_limits<float>::max());
-  } else {
-    result.set_float(left.get_float() / right.get_float());
+    result.set_null();
+    return RC::SUCCESS;
   }
+
+  result.set_float(left.get_float() / right.get_float());
   return RC::SUCCESS;
 }
 
@@ -61,7 +62,7 @@ RC FloatType::negative(const Value &val, Value &result) const
 
 RC FloatType::set_value_from_str(Value &val, const string &data) const
 {
-  RC                rc = RC::SUCCESS;
+  RC           rc = RC::SUCCESS;
   stringstream deserialize_stream;
   deserialize_stream.clear();
   deserialize_stream.str(data);
@@ -83,19 +84,43 @@ RC FloatType::to_string(const Value &val, string &result) const
   result = ss.str();
   return RC::SUCCESS;
 }
-RC FloatType::cast_to(const Value &val, AttrType type, Value &result) const
- {
-   switch (type) {
-     case AttrType::INTS: {
-       int to = int(val.value_.float_value_);
-       result.set_int(to);
-       break;
-     }
-     case AttrType::CHARS: {
-       std::string to = common::double_to_str(val.value_.float_value_);
-       break;
-     }
-     default: return RC::UNIMPLEMENTED;
-   }
-   return RC::SUCCESS;
- }
+
+int FloatType::cast_cost(AttrType type)
+{
+  if (type == AttrType::FLOATS)
+    return 0;  // FLOAT -> FLOAT
+  // if (type == AttrType::INTS)
+  //   return 1;  // FLOAT -> INT (可能丢失精度，也不支持转换)
+  if (type == AttrType::BOOLEANS)
+    return 1;        // FLOAT -> BOOL (非严格转换)
+  return INT32_MAX;  // 不支持转换
+}
+
+RC FloatType::cast_to(const Value &val, AttrType type, Value &result, bool allow_type_promotion) const
+{
+  switch (type) {
+    case AttrType::FLOATS: {
+      result.set_float(val.get_float());
+    } break;
+    case AttrType::INTS: {
+
+      result.set_int(static_cast<int>(std::round(val.get_float())));
+    } break;
+    case AttrType::CHARS: {
+
+      float       float_val = val.get_float();
+      std::string str       = float_val < 0 ? std::to_string(-float_val) : std::to_string(float_val);
+
+      str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+      if (str.back() == '.') {
+        str.pop_back();
+      }
+      result.set_string(str.c_str());  // 设置字符串结果
+    } break;
+    case AttrType::BOOLEANS: {
+      result.set_boolean(val.get_float() != 0.0f);  // 非零为 true，零为 false
+    } break;
+    default: return RC::UNSUPPORTED;  // 不支持的转换
+  }
+  return RC::SUCCESS;
+}

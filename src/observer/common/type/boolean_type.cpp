@@ -9,19 +9,14 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details. */
 
 //
-// Created by Longda on 2021/4/14.
+// Created by 胡鑫 on 24-10-19.
 //
 
-#pragma once
+#include "boolean_type.h"
+#include "common/value.h"
 
-//! this document is used for ini setting
-
-#define CLIENT_ADDRESS "CLIENT_ADDRESS"
-#define MAX_CONNECTION_NUM "MAX_CONNECTION_NUM"
-#define MAX_CONNECTION_NUM_DEFAULT 8192
-#define PORT "PORT"
-#define PORT_DEFAULT 6789
-
-#define SOCKET_BUFFER_SIZE 131072
-
-#define SESSION_STAGE_NAME "SessionStage"
+RC BooleanType::to_string(const Value &val, string &result) const
+{
+  result = val.get_boolean() ? "TRUE" : "FALSE";
+  return RC::SUCCESS;
+}

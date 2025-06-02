@@ -11,6 +11,7 @@ See the Mulan PSL v2 for more details. */
 #pragma once
 
 #include "common/type/data_type.h"
+#include <common/value.h>
 
 /**
  * @brief 整型类型
@@ -32,5 +33,7 @@ public:
   RC set_value_from_str(Value &val, const string &data) const override;
 
   RC to_string(const Value &val, string &result) const override;
-  RC cast_to(const Value &val, AttrType type, Value &result) const override;
+
+  int cast_cost(AttrType type) override;
+  RC  cast_to(const Value &val, AttrType type, Value &result, bool allow_type_promotion = true) const override;
 };
