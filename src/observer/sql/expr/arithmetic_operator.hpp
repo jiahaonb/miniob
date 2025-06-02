@@ -369,6 +369,12 @@ void compare_result(T *left, T *right, int n, vector<uint8_t> &result, CompOp op
       compare_operation<T, LEFT_CONSTANT, RIGHT_CONSTANT, LessThan>(left, right, n, result);
       break;
     }
+    case CompOp::LIKE_OP:
+    case CompOp::NOT_LIKE_OP: {
+      // LIKE operations are handled at Value level, not here
+      // This should not be reached for LIKE operations
+      break;
+    }
     default: break;
   }
 }
