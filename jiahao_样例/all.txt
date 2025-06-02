@@ -24,6 +24,8 @@ echo 'UPDATE jiahao SET age=99 WHERE id=2;' | /tmp/miniob/build/bin/obclient -s 
 
 python3 /home/jiahao/Apolikefly/OceanBase/miniob/test/case/miniob_test.py --test-cases=primary-update
 
+python3 /home/jiahao/Apolikefly/OceanBase/miniob/test/case/miniob_test.py --test-cases=primary-update --report-only
+
 ===============================查看日志===========================
 
 ls -la /tmp/miniob/log/ 2>/dev/null || ls -la /tmp/miniob/ | grep log

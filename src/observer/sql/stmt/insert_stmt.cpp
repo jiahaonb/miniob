@@ -36,7 +36,7 @@ RC InsertStmt::create(Db *db,  InsertSqlNode &inserts, Stmt *&stmt)
     LOG_WARN("no such table. db=%s, table_name=%s", db->name(), table_name);
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
-
+ 
 
   // check the fields number
   Value     *values     = inserts.values.data();

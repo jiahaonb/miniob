@@ -87,7 +87,11 @@ RC ExpressionBinder::bind_expression(unique_ptr<Expression> &expr, vector<unique
     } break;
 
     case ExprType::AGGREGATION: {
-      ASSERT(false, "shouldn't be here");
+      //ASSERT(false, "shouldn't be here");
+      return bind_aggregate_expression(expr, bound_expressions);
+    } break;
+       case ExprType::UNBOUND_ORDER: {
+      return bind_unbound_order_expression(expr, bound_expressions);
     } break;
 
     default: {
@@ -381,6 +385,7 @@ RC check_aggregate_expression(AggregateExpr &expression)
     case AggregateExpr::Type::MIN: {
       // 任何类型都支持
     } break;
+    default: break;
   }
 
   // 子表达式中不能再包含聚合表达式
@@ -445,5 +450,42 @@ RC ExpressionBinder::bind_aggregate_expression(
   }
 
   bound_expressions.emplace_back(std::move(aggregate_expr));
+  return RC::SUCCESS;
+}
+
+
+RC ExpressionBinder::bind_unbound_order_expression(
+    unique_ptr<Expression> &expr, vector<unique_ptr<Expression>> &bound_expressions)
+{
+
+  if (nullptr == expr) {
+    return RC::SUCCESS;
+  }
+
+  UnboundOrderExpr *unbound_order_expr = static_cast<UnboundOrderExpr *>(expr.get());
+
+  if (unbound_order_expr->field_expr() == nullptr) {
+    LOG_WARN("invalid unbound order expression: %s", unbound_order_expr->name());
+    return RC::INVALID_ARGUMENT;
+  }
+  if ( unbound_order_expr->field_expr()->type() != ExprType::UNBOUND_FIELD) {
+    LOG_WARN("invalid unbound order expression: %s", unbound_order_expr->name());
+    return RC::INVALID_ARGUMENT;
+  }
+  auto &unbound_field_expr = unbound_order_expr->field_expr();
+  vector<unique_ptr<Expression>> tmp_expressions;
+  RC rc = bind_unbound_field_expression(unbound_field_expr, tmp_expressions);
+  if (OB_FAIL(rc)) {
+    return rc;
+  }
+  if (tmp_expressions.size()!= 1) {
+    LOG_WARN("invalid children number of unbound field expression: %d", tmp_expressions.size());
+    return RC::INVALID_ARGUMENT;
+  }
+
+  Field field = static_cast<FieldExpr*>(tmp_expressions[0].get())->field();
+  // auto order_expr = unique_ptr<OrderExpr>(new OrderExpr(field.table(), field.meta(), unbound_order_expr->order()));
+  bound_expressions.emplace_back(make_unique<OrderExpr>(field.table(), field.meta(), unbound_order_expr->order()));
+
   return RC::SUCCESS;
 }
