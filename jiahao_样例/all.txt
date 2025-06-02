@@ -32,3 +32,9 @@ ls -la /tmp/miniob/log/ 2>/dev/null || ls -la /tmp/miniob/ | grep log
 tail -f /tmp/miniob/observer.log.20250602 &
 
 echo "UPDATE Update_table_1 SET t_name='N01' WHERE id=1;" | /tmp/miniob/build/bin/obclient -s /tmp/miniob/miniob.sock
+
+
+=============================查看占用进程============================
+
+ps aux | grep observer
+
