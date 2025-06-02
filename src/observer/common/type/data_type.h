@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/memory.h"
 #include "common/lang/string.h"
 #include "common/sys/rc.h"
+#include "common/log/log.h"
 #include "common/type/attr_type.h"
 
 class Value;
@@ -75,7 +76,7 @@ public:
   /**
    * @brief 将 val 转换为 type 类型，并将结果保存到 result 中
    */
-  virtual RC cast_to(const Value &val, AttrType type, Value &result) const { return RC::UNSUPPORTED; }
+  virtual RC cast_to(const Value &val, AttrType type, Value &result) const ;
 
   /**
    * @brief 将 val 转换为 string，并将结果保存到 result 中
@@ -88,6 +89,9 @@ public:
   virtual int cast_cost(AttrType type)
   {
     if (type == attr_type_) {
+      return 0;
+    } else if(attr_type_!=AttrType::CHARS&&attr_type_!=AttrType::VECTORS&&
+      type!=AttrType::CHARS&&type!=AttrType::VECTORS) {
       return 0;
     }
     return INT32_MAX;
