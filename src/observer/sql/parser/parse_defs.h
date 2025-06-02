@@ -44,14 +44,20 @@ struct RelAttrSqlNode
  */
 enum CompOp
 {
-  EQUAL_TO,     ///< "="
-  LESS_EQUAL,   ///< "<="
-  NOT_EQUAL,    ///< "<>"
-  LESS_THAN,    ///< "<"
-  GREAT_EQUAL,  ///< ">="
-  GREAT_THAN,   ///< ">"
-  LIKE_OP,      ///< "like"
-  NOT_LIKE_OP,  ///< "not like"
+  EQUAL_TO,       ///< "="
+  LESS_EQUAL,     ///< "<="
+  NOT_EQUAL,      ///< "<>"
+  LESS_THAN,      ///< "<"
+  GREAT_EQUAL,    ///< ">="
+  GREAT_THAN,     ///< ">"
+  IS_OP,          ///< "is (null)"
+  IS_NOT_OP,      ///< "is not (null)"
+  LIKE_OP,        ///< "like"
+  NOT_LIKE_OP,    ///< "not like"
+  IN_OP,          ///< "in (sub query)"
+  NOT_IN_OP,      ///< "not in (sub query)"
+  EXISTS_OP,      ///< "exists (sub query)"
+  NOT_EXISTS_OP,  ///< "not exists (sub query)"
   NO_OP
 };
 
@@ -74,6 +80,48 @@ struct ConditionSqlNode
                                  ///< 1时，操作符右边是属性名，0时，是属性值
   RelAttrSqlNode right_attr;     ///< right-hand side attribute if right_is_attr = TRUE 右边的属性
   Value          right_value;    ///< right-hand side value if right_is_attr = FALSE
+};
+
+/**
+ * @brief 描述一个关系（表）及其别名
+ * @ingroup SQLParser
+ */
+struct RelationNode
+{
+  RelationNode(string relation_, string alias_) : relation(std::move(relation_)), alias(std::move(alias_)) {}
+  explicit RelationNode(string relation_) : relation(std::move(relation_)) {}
+  string relation;  ///< 查询的表
+  string alias;     ///< 该表的别名 (may be NULL)
+};
+
+/**
+ * @brief 描述一个ORDER BY子句单元
+ * @ingroup SQLParser
+ */
+struct OrderBySqlNode
+{
+  unique_ptr<Expression> expr;
+  bool                   is_asc;  ///< 默认true 为升序
+};
+
+/**
+ * @brief 描述一个LIMIT子句
+ * @ingroup SQLParser
+ */
+struct LimitSqlNode
+{
+  int number;
+};
+
+/**
+ * @brief 描述一个join语句
+ * @ingroup SQLParser
+ * @details 目前只支持 inner join，解析表和条件后直接放到 SelectSqlNode 里。
+ */
+struct JoinSqlNode
+{
+  vector<string>          relations;   ///< 查询的表
+  unique_ptr<Expression>  conditions;  ///< 查询条件，可能有多个
 };
 
 /**

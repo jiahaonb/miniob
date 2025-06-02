@@ -99,6 +99,8 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
         AND
         NOT
         LIKE
+        INNER
+        JOIN
         SET
         ON
         LOAD
@@ -121,14 +123,14 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
   Value *                                    value;
   enum CompOp                                comp;
   RelAttrSqlNode *                           rel_attr;
-  vector<AttrInfoSqlNode> *             attr_infos;
+  vector<AttrInfoSqlNode> *                  attr_infos;
   AttrInfoSqlNode *                          attr_info;
   Expression *                               expression;
-  vector<unique_ptr<Expression>> * expression_list;
-  vector<Value> *                       value_list;
-  vector<ConditionSqlNode> *            condition_list;
-  vector<RelAttrSqlNode> *              rel_attr_list;
-  vector<string> *                 relation_list;
+  vector<unique_ptr<Expression>> *           expression_list;
+  vector<Value> *                            value_list;
+  vector<ConditionSqlNode> *                 condition_list;
+  vector<RelAttrSqlNode> *                   rel_attr_list;
+  vector<string> *                           relation_list;
   char *                                     cstring;
   int                                        number;
   float                                      floats;
@@ -182,6 +184,11 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
 %type <sql_node>            command_wrapper
 // commands should be a list but I use a single command instead
 %type <sql_node>            commands
+%type <relation_node_list>  relation_node_list
+%type <join_clause>         join_clause
+%type <order_by_unit>       order_by_unit
+%type <order_by_list>       order_by_list
+%type <limit_clause>        limit_clause
 
 %left '+' '-'
 %left '*' '/'
