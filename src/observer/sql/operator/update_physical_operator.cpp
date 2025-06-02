@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/record/record.h"
 #include "storage/table/table.h"
 #include "storage/trx/trx.h"
+#include "storage/db/db.h"
 
 RC UpdatePhysicalOperator::open(Trx *trx)
 {
@@ -40,6 +41,8 @@ RC UpdatePhysicalOperator::next()
   }
 
   PhysicalOperator *child = children_[0].get();
+  int updated_count = 0;  // 记录更新的记录数量
+  
   while (RC::SUCCESS == (rc = child->next())) {
     Tuple *tuple = child->current_tuple();
     if (nullptr == tuple) {
@@ -104,6 +107,18 @@ RC UpdatePhysicalOperator::next()
     rc = trx_->insert_record(table_, new_record);
     if (rc != RC::SUCCESS) {
       LOG_WARN("failed to insert new record: %s", strrc(rc));
+      return rc;
+    }
+    
+    updated_count++;
+  }
+
+  // 如果更新了记录，进行数据同步以确保持久化
+  if (updated_count > 0) {
+    LOG_INFO("Updated %d records, syncing table data", updated_count);
+    rc = table_->sync();
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("failed to sync table after update: %s", strrc(rc));
       return rc;
     }
   }

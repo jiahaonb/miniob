@@ -82,6 +82,14 @@ RC CommandExecutor::execute(SQLStageEvent *sql_event)
       rc = RC::SUCCESS;
     } break;
 
+    case StmtType::UPDATE:
+    case StmtType::SELECT:
+    case StmtType::INSERT:
+    case StmtType::DELETE: {
+      // 这些语句通过物理算子执行，需要返回UNIMPLEMENTED让系统走优化器路径
+      rc = RC::UNIMPLEMENTED;
+    } break;
+
     default: {
       LOG_ERROR("unknown command: %d", static_cast<int>(stmt->type()));
       rc = RC::UNIMPLEMENTED;
