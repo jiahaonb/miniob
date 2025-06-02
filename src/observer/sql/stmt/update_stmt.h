@@ -32,23 +32,34 @@ class UpdateStmt : public Stmt
 {
 public:
   UpdateStmt() = default;
-  UpdateStmt(Table *table, const string &attribute_name, const Value *value, FilterStmt *filter_stmt);
-  ~UpdateStmt() override;
+  UpdateStmt(Table *table, const Value &value, int value_offset, FilterStmt *filter_stmt);
+  // ~UpdateStmt() override;
 
   StmtType type() const override { return StmtType::UPDATE; }
 
 public:
-  static RC create(Db *db, const UpdateSqlNode &update_sql, Stmt *&stmt);
+  static RC create(Db *db, const UpdateSqlNode &update, Stmt *&stmt);
 
 public:
   Table *table() const { return table_; }
   const string &attribute_name() const { return attribute_name_; }
-  const Value *value() const { return value_; }
-  FilterStmt *filter_stmt() const { return filter_stmt_; }
+  const Value& value() const
+  {
+    return value_;
+  }
+    int value_offset() const
+  {
+    return value_offset_;
+  }
+  FilterStmt* filter_stmt() const 
+  {
+    return filter_stmt_;
+  }
 
 private:
   Table *table_ = nullptr;
   string attribute_name_;
-  const Value *value_ = nullptr;
-  FilterStmt *filter_stmt_ = nullptr;
+  Value value_;
+  int value_offset_ = 0; 
+  FilterStmt* filter_stmt_ = nullptr;
 };
