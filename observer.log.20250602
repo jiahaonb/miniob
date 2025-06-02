@@ -480,3 +480,9 @@ Finish dump configuration
 [2025-06-02 17:42:01.242597 pid:137816 tid:76ef32f737c0 ctx:0 INFO: accept@server.cpp:127] >> Accepted connection from 127.0.0.1:13007
 
 [2025-06-02 17:42:01.242927 pid:137816 tid:76ef2dd816c0 ctx:0 INFO: operator()@one_thread_per_connection_thread_handler.cpp:70] >> worker thread start. communicator = 0x50b000000930
+[2025-06-02 18:00:56.714429 pid:137816 tid:76ef32f737c0 ctx:0 WARN: serve@server.cpp:271] >> [listen socket] poll error. fd = 6, ret = -1, error=Interrupted system call
+[2025-06-02 18:00:56.714590 pid:137816 tid:76ef32f737c0 ctx:0 INFO: await_stop@one_thread_per_connection_thread_handler.cpp:170] >> begin to await stop one thread per connection thread handler
+[2025-06-02 18:00:56.714725 pid:137816 tid:76ef2ca776c0 ctx:0 INFO: quit_thread_func@main.cpp:153] >> Receive signal: 2
+[2025-06-02 18:00:56.714839 pid:137816 tid:76ef2ca776c0 ctx:0 INFO: shutdown@server.cpp:299] >> NetServer shutting down
+[2025-06-02 18:00:56.859152 pid:137816 tid:76ef2dd816c0 ctx:0 INFO: operator()@one_thread_per_connection_thread_handler.cpp:103] >> worker thread stop. communicator = 0x50b000000930
+[2025-06-02 18:00:56.859521 pid:137816 tid:76ef2dd816c0 ctx:0 INFO: close_connection@one_thread_per_connection_thread_handler.cpp:154] >> close connection. communicator = 0x50b000000930
