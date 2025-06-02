@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <limits.h>
 #include <string.h>
+#include <filesystem>
 
 #include "common/defs.h"
 #include "common/lang/string.h"
@@ -524,19 +525,86 @@ Index *Table::find_index_by_field(const char *field_name) const
 RC Table::sync()
 {
   RC rc = RC::SUCCESS;
-  for (Index *index : indexes_) {
-    rc = index->sync();
+  if (data_buffer_pool_ != nullptr) {
+    rc = data_buffer_pool_->flush_all_pages();
     if (rc != RC::SUCCESS) {
-      LOG_ERROR("Failed to flush index's pages. table=%s, index=%s, rc=%d:%s",
-          name(),
-          index->index_meta().name(),
-          rc,
-          strrc(rc));
-      return rc;
+      LOG_ERROR("Failed to flush data pages. table name=%s, rc=%d:%s", name(), rc, strrc(rc));
+      // go on
     }
   }
 
-  rc = data_buffer_pool_->flush_all_pages();
-  LOG_INFO("Sync table over. table=%s", name());
+  for (Index *index : indexes_) {
+    rc = index->sync();
+    if (rc != RC::SUCCESS) {
+      LOG_ERROR("Failed to flush index pages. table name=%s, index name=%s, rc=%d:%s", name(), index->index_meta().name(), rc,
+          strrc(rc));
+      // go on
+    }
+  }
   return rc;
+}
+
+RC Table::drop()
+{
+  RC rc = sync(); // Sync all dirty pages first
+  if (rc != RC::SUCCESS) {
+    LOG_WARN("Failed to sync table %s before dropping, attempting to drop anyway. rc=%d:%s", name(), rc, strrc(rc));
+    // Continue anwary, as we want to drop the files.
+  }
+
+  const char* current_table_name = name(); // Get table name
+  std::error_code ec; // For std::filesystem::remove
+
+  // Drop meta file
+  std::string path_str = table_meta_file(base_dir_.c_str(), current_table_name);
+  if (!std::filesystem::remove(std::filesystem::path(path_str), ec)) {
+    if (ec != std::errc::no_such_file_or_directory) {
+        LOG_ERROR("Drop table meta file failed: %s. error_code: %d, message: %s", path_str.c_str(), ec.value(), ec.message().c_str());
+        return RC::IOERR_WRITE; 
+    }
+  }
+
+  // Drop data file
+  path_str = table_data_file(base_dir_.c_str(), current_table_name);
+  if (!std::filesystem::remove(std::filesystem::path(path_str), ec)) {
+    if (ec != std::errc::no_such_file_or_directory) {
+        LOG_ERROR("Drop table data file failed: %s. error_code: %d, message: %s", path_str.c_str(), ec.value(), ec.message().c_str());
+        return RC::IOERR_WRITE;
+    }
+  }
+
+  // Drop index files
+  int index_num = table_meta_.index_num();
+  for (int i = 0; i < index_num; ++i) {
+    if (indexes_[i]) { 
+        BplusTreeIndex* btree_index = dynamic_cast<BplusTreeIndex*>(indexes_[i]);
+        if (btree_index) {
+            RC close_rc = btree_index->close(); 
+            if (close_rc != RC::SUCCESS) {
+                LOG_WARN("Failed to close B+Tree index %s for table %s before dropping. rc=%d:%s", 
+                         btree_index->index_meta().name(), current_table_name, close_rc, strrc(close_rc));
+            }
+        } else {
+            // Optional: Log if index is not a BplusTreeIndex and has no close method, or if it's an unexpected type.
+            // LOG_WARN("Index %s for table %s is not a BplusTreeIndex or close() is not available.", 
+            // indexes_[i]->index_meta().name(), current_table_name);
+        }
+    }
+    const char* index_name_str = table_meta_.index(i)->name();
+    path_str = table_index_file(base_dir_.c_str(), current_table_name, index_name_str);
+    if (!std::filesystem::remove(std::filesystem::path(path_str), ec)) {
+      if (ec != std::errc::no_such_file_or_directory) {
+          LOG_ERROR("Drop table index file failed: %s. error_code: %d, message: %s", path_str.c_str(), ec.value(), ec.message().c_str());
+          return RC::IOERR_WRITE;
+      }
+    }
+  }
+  // Clear the indexes_ vector as they are now dropped and their objects potentially deleted or invalid
+  for (Index* idx : indexes_) {
+    delete idx; 
+  }
+  indexes_.clear();
+
+  LOG_INFO("Successfully dropped table %s", current_table_name);
+  return RC::SUCCESS;
 }
