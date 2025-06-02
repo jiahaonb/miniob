@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/string.h"
 #include "common/lang/memory.h"
 #include "sql/operator/physical_operator.h"
+#include "event/session_event.h"
 
 class SessionEvent;
 class Stmt;
