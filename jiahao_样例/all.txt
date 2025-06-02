@@ -1,0 +1,23 @@
+# 4. UPDATE
+
+--- 创建表格
+
+CREATE TABLE jiahao (id INT, name CHAR(50), age INT, grade FLOAT);
+
+--- 插入数据
+
+INSERT INTO jiahao VALUES (1, 'Alice', 12, 88.5);
+INSERT INTO jiahao VALUES (2, 'Bob', 23, 92.0);
+INSERT INTO jiahao VALUES (3, 'Charlie', 34, 75.0);
+INSERT INTO jiahao VALUES (4, 'Apo', 80, 66.0);
+
+--- 查看数据
+
+--- 更新数据
+
+
+==============================打开调试===============================
+
+cd /tmp/miniob && ./build/bin/observer -f /home/jiahao/Apolikefly/OceanBase/miniob/etc/observer.ini -s miniob.sock
+
+echo 'UPDATE jiahao SET age=99 WHERE id=2;' | /tmp/miniob/build/bin/obclient -s /tmp/miniob/miniob.sock
