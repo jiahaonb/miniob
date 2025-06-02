@@ -11,7 +11,9 @@ See the Mulan PSL v2 for more details. */
 #pragma once
 
 #include <string>
+#include <vector>
 #include "sql/operator/physical_operator.h"
+#include "storage/record/record.h"
 
 using namespace std;
 
@@ -44,4 +46,5 @@ private:
   Value value_;
   int value_offset_;
   Trx *trx_ = nullptr;
+  vector<Record> records_; ///< 需要更新的记录集合
 }; 

@@ -22,6 +22,7 @@ cd /tmp/miniob && ./build/bin/observer -f /home/jiahao/Apolikefly/OceanBase/mini
 
 echo 'UPDATE jiahao SET age=99 WHERE id=2;' | /tmp/miniob/build/bin/obclient -s /tmp/miniob/miniob.sock
 
+python3 /home/jiahao/Apolikefly/OceanBase/miniob/test/case/miniob_test.py --test-cases=primary-update
 
 ===============================查看日志===========================
 
