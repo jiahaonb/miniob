@@ -186,6 +186,9 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
 %type <sql_node>            commands
 %type <join_node>           join_clauses
 
+%left OR
+%left AND
+%left EQ LT GT LE GE NE LIKE
 %left '+' '-'
 %left '*' '/'
 %nonassoc UMINUS
@@ -515,6 +518,12 @@ calc_stmt:
       $$->calc.expressions.swap(*$2);
       delete $2;
     }
+    | SELECT expression_list
+    {
+      $$ = new ParsedSqlNode(SCF_CALC);
+      $$->calc.expressions.swap(*$2);
+      delete $2;
+    }
     ;
 
 expression_list:
@@ -545,6 +554,9 @@ expression:
     }
     | expression '/' expression {
       $$ = create_arithmetic_expression(ArithmeticExpr::Type::DIV, $1, $3, sql_string, &@$);
+    }
+    | expression comp_op expression {
+      $$ = new ComparisonExpr($2, unique_ptr<Expression>($1), unique_ptr<Expression>($3));
     }
     | LBRACE expression RBRACE {
       $$ = $2;
