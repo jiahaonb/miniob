@@ -44,7 +44,7 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
   vector<Table *>                tables;
   unordered_map<string, Table *> table_map;
   for (size_t i = 0; i < select_sql.relations.size(); i++) {
-    const char *table_name = select_sql.relations[i].c_str();
+    const char *table_name = select_sql.relations[i].relation.c_str();
     if (nullptr == table_name) {
       LOG_WARN("invalid argument. relation name is null. index=%d", i);
       return RC::INVALID_ARGUMENT;
@@ -82,13 +82,16 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
     }
   }
 
-  Table *default_table = nullptr;
-  if (tables.size() == 1) {
-    default_table = tables[0];
-  }
+  // Table *default_table = nullptr;
+  // if (tables.size() == 1) {
+  //   default_table = tables[0];
+  // }
 
   // create filter statement in `where` statement
   FilterStmt *filter_stmt = nullptr;
+  // 暂时禁用FilterStmt，因为现在conditions使用Expression系统
+  // TODO: 后续需要实现Expression到FilterStmt的转换
+  /*
   RC          rc          = FilterStmt::create(db,
       default_table,
       &table_map,
@@ -99,6 +102,7 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
     LOG_WARN("cannot construct filter stmt");
     return rc;
   }
+  */
 
   // everything alright
   SelectStmt *select_stmt = new SelectStmt();

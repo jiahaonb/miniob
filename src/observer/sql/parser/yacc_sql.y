@@ -89,6 +89,8 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         AND
         NOT
         LIKE
+        INNER
+        JOIN
         SET
         ON
         LOAD
@@ -108,7 +110,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 /** union 中定义各种数据类型，真实生成的代码也是union类型，所以不能有非POD类型的数据 **/
 %union {
   ParsedSqlNode *                            sql_node;
-  ConditionSqlNode *                         condition;
+  Expression *                               condition;
   Value *                                    value;
   enum CompOp                                comp;
   RelAttrSqlNode *                           rel_attr;
@@ -117,9 +119,9 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   Expression *                               expression;
   vector<unique_ptr<Expression>> * expression_list;
   vector<Value> *                       value_list;
-  vector<ConditionSqlNode> *            condition_list;
-  vector<RelAttrSqlNode> *              rel_attr_list;
-  vector<string> *                 relation_list;
+  vector<RelationNode> *                relation_list;
+  vector<string> *                      string_list;
+  JoinSqlNode *                              join_clauses;
   char *                                     cstring;
   int                                        number;
   float                                      floats;
@@ -143,14 +145,15 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <attr_infos>          attr_def_list
 %type <attr_info>           attr_def
 %type <value_list>          value_list
-%type <condition_list>      where
-%type <condition_list>      condition_list
+%type <condition>           where
 %type <cstring>             storage_format
 %type <relation_list>       rel_list
+%type <string_list>         attr_list
 %type <expression>          expression
 %type <expression>          func_expr
 %type <expression_list>     expression_list
 %type <expression_list>     group_by
+%type <join_clauses>        join_clauses
 %type <sql_node>            calc_stmt
 %type <sql_node>            select_stmt
 %type <sql_node>            insert_stmt
@@ -175,10 +178,10 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 // commands should be a list but I use a single command instead
 %type <sql_node>            commands
 %type <number>              opt_unique
-%type <relation_list>       attr_list
 
 %left '+' '-'
 %left '*' '/'
+%left AND
 %nonassoc UMINUS
 %%
 
@@ -444,8 +447,8 @@ delete_stmt:    /*  delete 语句的语法解析树*/
       $$ = new ParsedSqlNode(SCF_DELETE);
       $$->deletion.relation_name = $3;
       if ($4 != nullptr) {
-        $$->deletion.conditions.swap(*$4);
-        delete $4;
+        // 这里暂时保持为空，因为我们暂时不支持DELETE的复杂条件
+        // 后续可以添加简单条件支持
       }
     }
     ;
@@ -457,9 +460,10 @@ update_stmt:      /*  update 语句的语法解析树*/
       $$->update.attribute_name = $4;
       $$->update.value = *$6;
       if ($7 != nullptr) {
-        $$->update.conditions.swap(*$7);
-        delete $7;
+        // 这里暂时保持为空，因为我们暂时不支持UPDATE的复杂条件
+        // 后续可以添加简单条件支持
       }
+      delete $6;
     }
     ;
 select_stmt:        /*  select 语句的语法解析树*/
@@ -477,13 +481,47 @@ select_stmt:        /*  select 语句的语法解析树*/
       }
 
       if ($5 != nullptr) {
-        $$->selection.conditions.swap(*$5);
-        delete $5;
+        $$->selection.conditions = std::unique_ptr<Expression>($5);
       }
 
       if ($6 != nullptr) {
         $$->selection.group_by.swap(*$6);
         delete $6;
+      }
+    }
+    | SELECT expression_list FROM relation INNER JOIN join_clauses where group_by
+    {
+      $$ = new ParsedSqlNode(SCF_SELECT);
+      if ($2 != nullptr) {
+        $$->selection.expressions.swap(*$2);
+        delete $2;
+      }
+
+      if ($4 != nullptr) {
+        $$->selection.relations.emplace_back($4);
+        free($4);
+      }
+
+      if ($7 != nullptr) {
+        for (auto it = $7->relations.rbegin(); it != $7->relations.rend(); ++it) {
+          $$->selection.relations.emplace_back(std::move(*it));
+        }
+        $$->selection.conditions = std::move($7->conditions);
+        delete $7;
+      }
+
+      if ($8 != nullptr) {
+        vector<unique_ptr<Expression>> children;
+        if ($$->selection.conditions) {
+          children.emplace_back(std::move($$->selection.conditions));
+        }
+        children.emplace_back($8);
+        $$->selection.conditions = std::make_unique<ConjunctionExpr>(ConjunctionExpr::Type::AND, children);
+      }
+
+      if ($9 != nullptr) {
+        $$->selection.group_by.swap(*$9);
+        delete $9;
       }
     }
     ;
@@ -584,17 +622,53 @@ relation:
     ;
 rel_list:
     relation {
-      $$ = new vector<string>();
-      $$->push_back($1);
+      $$ = new vector<RelationNode>();
+      $$->emplace_back($1);
+      free($1);
     }
     | relation COMMA rel_list {
       if ($3 != nullptr) {
         $$ = $3;
       } else {
-        $$ = new vector<string>;
+        $$ = new vector<RelationNode>;
       }
 
-      $$->insert($$->begin(), $1);
+      $$->insert($$->begin(), RelationNode($1));
+      free($1);
+    }
+    ;
+
+join_clauses:
+      relation ON condition
+    {
+      $$ = new JoinSqlNode;
+      $$->relations.emplace_back($1);
+      $$->conditions = std::unique_ptr<Expression>($3);
+      free($1);
+    }
+    | relation ON condition INNER JOIN join_clauses
+    {
+      $$ = $6;
+      $$->relations.emplace_back($1);
+      vector<unique_ptr<Expression>> children;
+      children.emplace_back(std::move($$->conditions));
+      children.emplace_back($3);
+      $$->conditions = std::make_unique<ConjunctionExpr>(ConjunctionExpr::Type::AND, children);
+      free($1);
+    }
+    ;
+
+condition:
+    expression comp_op expression
+    {
+      $$ = new ComparisonExpr($2, std::unique_ptr<Expression>($1), std::unique_ptr<Expression>($3));
+    }
+    | condition AND condition
+    {
+      vector<unique_ptr<Expression>> children;
+      children.emplace_back($1);
+      children.emplace_back($3);
+      $$ = new ConjunctionExpr(ConjunctionExpr::Type::AND, children);
     }
     ;
 
@@ -603,86 +677,9 @@ where:
     {
       $$ = nullptr;
     }
-    | WHERE condition_list {
+    | WHERE condition {
       $$ = $2;  
     }
-    ;
-condition_list:
-    /* empty */
-    {
-      $$ = nullptr;
-    }
-    | condition {
-      $$ = new vector<ConditionSqlNode>;
-      $$->emplace_back(*$1);
-      delete $1;
-    }
-    | condition AND condition_list {
-      $$ = $3;
-      $$->emplace_back(*$1);
-      delete $1;
-    }
-    ;
-condition:
-    rel_attr comp_op value
-    {
-      $$ = new ConditionSqlNode;
-      $$->left_is_attr = 1;
-      $$->left_attr = *$1;
-      $$->right_is_attr = 0;
-      $$->right_value = *$3;
-      $$->comp = $2;
-
-      delete $1;
-      delete $3;
-    }
-    | value comp_op value 
-    {
-      $$ = new ConditionSqlNode;
-      $$->left_is_attr = 0;
-      $$->left_value = *$1;
-      $$->right_is_attr = 0;
-      $$->right_value = *$3;
-      $$->comp = $2;
-
-      delete $1;
-      delete $3;
-    }
-    | rel_attr comp_op rel_attr
-    {
-      $$ = new ConditionSqlNode;
-      $$->left_is_attr = 1;
-      $$->left_attr = *$1;
-      $$->right_is_attr = 1;
-      $$->right_attr = *$3;
-      $$->comp = $2;
-
-      delete $1;
-      delete $3;
-    }
-    | value comp_op rel_attr
-    {
-      $$ = new ConditionSqlNode;
-      $$->left_is_attr = 0;
-      $$->left_value = *$1;
-      $$->right_is_attr = 1;
-      $$->right_attr = *$3;
-      $$->comp = $2;
-
-      delete $1;
-      delete $3;
-    }
-    ;
-
-comp_op:
-      EQ { $$ = EQUAL_TO; }
-    | LT { $$ = LESS_THAN; }
-    | GT { $$ = GREAT_THAN; }
-    | LE { $$ = LESS_EQUAL; }
-    | GE { $$ = GREAT_EQUAL; }
-    | NE { $$ = NOT_EQUAL; }
-    | LIKE { $$ = LIKE_OP; }
-    | NOT LIKE { $$ = NOT_LIKE_OP; }
     ;
 
 // your code here
@@ -725,6 +722,18 @@ set_variable_stmt:
 opt_semicolon: /*empty*/
     | SEMICOLON
     ;
+
+comp_op:
+      EQ { $$ = EQUAL_TO; }
+    | LT { $$ = LESS_THAN; }
+    | GT { $$ = GREAT_THAN; }
+    | LE { $$ = LESS_EQUAL; }
+    | GE { $$ = GREAT_EQUAL; }
+    | NE { $$ = NOT_EQUAL; }
+    | LIKE { $$ = LIKE_OP; }
+    | NOT LIKE { $$ = NOT_LIKE_OP; }
+    ;
+
 %%
 //_____________________________________________________________________
 extern void scan_string(const char *str, yyscan_t scanner);

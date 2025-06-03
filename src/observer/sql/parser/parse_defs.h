@@ -77,6 +77,28 @@ struct ConditionSqlNode
 };
 
 /**
+ * @brief 描述一个关系表或者表别名
+ * @ingroup SQLParser
+ */
+struct RelationNode
+{
+  RelationNode(string relation_, string alias_) : relation(std::move(relation_)), alias(std::move(alias_)) {}
+  explicit RelationNode(string relation_) : relation(std::move(relation_)) {}
+  string relation;  ///< 查询的表
+  string alias;     ///< 该表的别名 (may be NULL)
+};
+
+/**
+ * @brief 描述一个JOIN语句的节点
+ * @ingroup SQLParser  
+ */
+struct JoinSqlNode
+{
+  vector<RelationNode>        relations;   ///< 查询的表
+  unique_ptr<Expression>      conditions;  ///< 查询条件，可能有多个
+};
+
+/**
  * @brief 描述一个select语句
  * @ingroup SQLParser
  * @details 一个正常的select语句描述起来比这个要复杂很多，这里做了简化。
@@ -89,10 +111,10 @@ struct ConditionSqlNode
 
 struct SelectSqlNode
 {
-  vector<unique_ptr<Expression>> expressions;  ///< 查询的表达式
-  vector<string>                 relations;    ///< 查询的表
-  vector<ConditionSqlNode>       conditions;   ///< 查询条件，使用AND串联起来多个条件
-  vector<unique_ptr<Expression>> group_by;     ///< group by clause
+  vector<unique_ptr<Expression>>  expressions;   ///< 查询的表达式
+  vector<RelationNode>            relations;     ///< 查询的表
+  unique_ptr<Expression>          conditions;    ///< 查询条件，使用Expression支持复杂条件
+  vector<unique_ptr<Expression>>  group_by;      ///< group by clause
 };
 
 /**
@@ -121,8 +143,8 @@ struct InsertSqlNode
  */
 struct DeleteSqlNode
 {
-  string                   relation_name;  ///< Relation to delete from
-  vector<ConditionSqlNode> conditions;
+  string                     relation_name;  ///< Relation to delete from
+  vector<ConditionSqlNode>   conditions;     ///< 删除条件，保持兼容性
 };
 
 /**
@@ -134,7 +156,7 @@ struct UpdateSqlNode
   string                   relation_name;   ///< Relation to update
   string                   attribute_name;  ///< 更新的字段，仅支持一个字段
   Value                    value;           ///< 更新的值，仅支持一个字段
-  vector<ConditionSqlNode> conditions;
+  vector<ConditionSqlNode> conditions;      ///< 更新条件，保持兼容性
 };
 
 /**
