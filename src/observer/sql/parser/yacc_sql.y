@@ -1,4 +1,3 @@
-
 %{
 
 #include <stdio.h>
@@ -406,8 +405,12 @@ create_index_stmt:
     ;
 
 opt_unique:
-    UNIQUE { $$ = true; }
-    | /* 空 */ { $$ = false; }
+    UNIQUE { 
+      // 功能已屏蔽 - UNIQUE索引不再支持
+      yyerror(&@$, sql_string, sql_result, scanner, "UNIQUE index feature has been disabled");
+      YYERROR;
+    }
+    | /* empty */ { $$ = false; }
     ;
 
 index_type:
@@ -473,11 +476,15 @@ drop_index_stmt:      /*drop index 语句的语法解析树*/
 create_table_stmt:    /*create table 语句的语法解析树*/
     CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE storage_format AS select_stmt
     {
-        $$ = create_table_sql_node($3, $5, $6, $8, $10);
+        // 功能已屏蔽 - CREATE TABLE ... SELECT不再支持
+        yyerror(&@$, sql_string, sql_result, scanner, "CREATE TABLE ... SELECT feature has been disabled");
+        YYERROR;
     }
     | CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE storage_format select_stmt
     {
-        $$ = create_table_sql_node($3, $5, $6, $8, $9);
+        // 功能已屏蔽 - CREATE TABLE ... SELECT不再支持
+        yyerror(&@$, sql_string, sql_result, scanner, "CREATE TABLE ... SELECT feature has been disabled");
+        YYERROR;
     }
     | CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE storage_format
     {
@@ -485,40 +492,39 @@ create_table_stmt:    /*create table 语句的语法解析树*/
     }
     | CREATE TABLE ID storage_format AS select_stmt
     {
-        $$ = create_table_sql_node($3, nullptr, nullptr, $4, $6);
+        // 功能已屏蔽 - CREATE TABLE ... AS SELECT不再支持
+        yyerror(&@$, sql_string, sql_result, scanner, "CREATE TABLE ... AS SELECT feature has been disabled");
+        YYERROR;
     }
     | CREATE TABLE ID storage_format select_stmt
     {
-      $$ = create_table_sql_node($3, nullptr, nullptr, $4, $5);
+      // 功能已屏蔽 - CREATE TABLE ... SELECT不再支持
+      yyerror(&@$, sql_string, sql_result, scanner, "CREATE TABLE ... SELECT feature has been disabled");
+      YYERROR;
     }
     ;
 
 create_view_stmt:
       CREATE VIEW ID AS select_stmt
     {
-      $$ = new ParsedSqlNode(SCF_CREATE_VIEW);
-      CreateViewSqlNode &create_view = $$->create_view;
-      create_view.relation_name = $3;
-      create_view.create_view_select = std::make_unique<SelectSqlNode>(std::move($5->selection));
-      free($3);
+      // 功能已屏蔽 - CREATE VIEW不再支持
+      yyerror(&@$, sql_string, sql_result, scanner, "CREATE VIEW feature has been disabled");
+      YYERROR;
     }
     | CREATE VIEW ID LBRACE attr_list RBRACE AS select_stmt
     {
-      $$ = new ParsedSqlNode(SCF_CREATE_VIEW);
-      CreateViewSqlNode &create_view = $$->create_view;
-      create_view.relation_name = $3;
-      create_view.attribute_names = std::move(*$5);
-      create_view.create_view_select = std::make_unique<SelectSqlNode>(std::move($8->selection));
-      free($3);
+      // 功能已屏蔽 - CREATE VIEW不再支持  
+      yyerror(&@$, sql_string, sql_result, scanner, "CREATE VIEW feature has been disabled");
+      YYERROR;
     }
     ;
 
 drop_view_stmt:
       DROP VIEW ID
     {
-      $$ = new ParsedSqlNode(SCF_DROP_VIEW);
-      $$->drop_view.relation_name = $3;
-      free($3);
+      // 功能已屏蔽 - DROP VIEW不再支持
+      yyerror(&@$, sql_string, sql_result, scanner, "DROP VIEW feature has been disabled");
+      YYERROR;
     }
     ;
 
@@ -896,27 +902,19 @@ expression_list:
     /* empty */ {
       $$ = new std::vector<std::unique_ptr<Expression>>;
     }
-    | expression alias
+    | expression
     {
       $$ = new std::vector<std::unique_ptr<Expression>>;
-      if (nullptr != $2) {
-        $1->set_alias($2);
-      }
       $$->emplace_back($1);
-      free($2);
     }
-    | expression alias COMMA expression_list
+    | expression COMMA expression_list
     {
-      if ($4 != nullptr) {
-        $$ = $4;
+      if ($3 != nullptr) {
+        $$ = $3;
       } else {
         $$ = new std::vector<std::unique_ptr<Expression>>;
       }
-      if (nullptr != $2) {
-        $1->set_alias($2);
-      }
       $$->emplace($$->begin(),std::move($1));
-      free($2);
     }
     ;
 
@@ -975,24 +973,38 @@ alias:
       $$ = nullptr;
     }
     | ID {
-      $$ = $1;
+      // 功能已屏蔽 - 别名功能不再支持
+      yyerror(&@$, sql_string, sql_result, scanner, "Alias feature has been disabled");
+      YYERROR;
     }
     | AS ID {
-      $$ = $2;
+      // 功能已屏蔽 - 别名功能不再支持  
+      yyerror(&@$, sql_string, sql_result, scanner, "Alias feature has been disabled");
+      YYERROR;
     }
 
 func_expr:
     ID LBRACE expression_list RBRACE
     {
-        $$ = new UnboundFunctionExpr($1, std::move(*$3));
-        $$->set_name(token_name(sql_string, &@$));
+        // 检查是否为聚合函数，只允许聚合函数
+        if (strcmp($1, "COUNT") == 0 || strcmp($1, "SUM") == 0 || 
+            strcmp($1, "AVG") == 0 || strcmp($1, "MAX") == 0 || strcmp($1, "MIN") == 0) {
+            $$ = new UnboundFunctionExpr($1, std::move(*$3));
+            $$->set_name(token_name(sql_string, &@$));
+        } else {
+            // 功能已屏蔽 - 非聚合函数不再支持
+            yyerror(&@$, sql_string, sql_result, scanner, "Non-aggregate function feature has been disabled");
+            YYERROR;
+        }
     }
     ;
 
 sub_query_expr:
     LBRACE select_stmt RBRACE
     {
-      $$ = new SubQueryExpr($2->selection);
+      // 功能已屏蔽 - 子查询功能不再支持
+      yyerror(&@$, sql_string, sql_result, scanner, "Sub-query feature has been disabled");
+      YYERROR;
     }
     ;
 
@@ -1018,28 +1030,18 @@ relation:
     ;
 
 rel_list:
-    relation alias {
+    relation {
       $$ = new std::vector<RelationNode>();
-      if(nullptr!=$2){
-        $$->emplace_back($1,$2);
-        free($2);
-      }else{
-        $$->emplace_back($1);
-      }
+      $$->emplace_back($1);
       free($1);
     }
-    | relation alias COMMA rel_list {
-      if ($4 != nullptr) {
-        $$ = $4;
+    | relation COMMA rel_list {
+      if ($3 != nullptr) {
+        $$ = $3;
       } else {
         $$ = new std::vector<RelationNode>;
       }
-      if(nullptr!=$2){
-        $$->insert($$->begin(), RelationNode($1,$2));
-        free($2);
-      }else{
-        $$->insert($$->begin(), RelationNode($1));
-      }
+      $$->insert($$->begin(), RelationNode($1));
       free($1);
     }
     ;
@@ -1118,8 +1120,9 @@ opt_order_by:
     }
     | ORDER BY sort_list
     {
-      $$ = $3;
-      std::reverse($$->begin(),$$->end());
+      // 功能已屏蔽 - ORDER BY不再支持
+      yyerror(&@$, sql_string, sql_result, scanner, "ORDER BY feature has been disabled");
+      YYERROR;
     }
     ;
 
@@ -1164,7 +1167,9 @@ group_by:
     }
     | GROUP BY expression_list
     {
-      $$ = $3;
+      // 功能已屏蔽 - GROUP BY不再支持
+      yyerror(&@$, sql_string, sql_result, scanner, "GROUP BY feature has been disabled");
+      YYERROR;
     }
     ;
 
