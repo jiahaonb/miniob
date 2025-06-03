@@ -1,3 +1,15 @@
+/***************************************************************
+ *                                                             *
+ * @Author      : Koschei                                      *
+ * @Email       : nitianzero@gmail.com                         *
+ * @Date        : 2024/9/30                                    *
+ * @Description : utils header file                            *
+ *                                                             *
+ * Copyright (c) 2024 Koschei                                  *
+ * All rights reserved.                                        *
+ *                                                             *
+ ***************************************************************/
+
 #pragma once
 
 #include "src/common/sys/rc.h"

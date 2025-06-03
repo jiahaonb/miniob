@@ -1,3 +1,4 @@
+
 %{
 
 #include <stdio.h>
@@ -74,7 +75,6 @@ ParsedSqlNode *create_table_sql_node(char *table_name,
         free(storage_format);
     }
 
-    // 恢复 create-table-select 功能
     if (create_table_select) {
         create_table.create_table_select = std::make_unique<SelectSqlNode>(std::move(create_table_select->selection));
     }
@@ -845,7 +845,7 @@ select_stmt:
         delete $9;
       }
     }
-    | SELECT expression_list FROM relation INNER JOIN join_clauses where
+    | SELECT expression_list FROM relation INNER JOIN join_clauses where group_by
     {
       $$ = new ParsedSqlNode(SCF_SELECT);
       if ($2 != nullptr) {
@@ -868,6 +868,11 @@ select_stmt:
       if ($8 != nullptr) {
         auto ptr = $$->selection.conditions.release();
         $$->selection.conditions = std::make_unique<ConjunctionExpr>(ConjunctionExpr::Type::AND, ptr, $8);
+      }
+
+      if ($9 != nullptr) {
+        $$->selection.group_by.swap(*$9);
+        delete $9;
       }
     }
     ;

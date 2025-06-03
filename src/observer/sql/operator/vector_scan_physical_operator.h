@@ -1,3 +1,15 @@
+/***************************************************************
+ *                                                             *
+ * @Author      : Koschei                                      *
+ * @Email       : nitianzero@gmail.com                         *
+ * @Date        : 2024/10/18                                   *
+ * @Description : VectorScanPhysicalOperator header file       *
+ *                                                             *
+ * Copyright (c) 2024 Koschei                                  *
+ * All rights reserved.                                        *
+ *                                                             *
+ ***************************************************************/
+
 #pragma once
 
 #include "sql/expr/tuple.h"

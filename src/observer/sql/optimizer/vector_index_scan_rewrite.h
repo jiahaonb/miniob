@@ -1,3 +1,15 @@
+/***************************************************************
+ *                                                             *
+ * @Author      : Koschei                                      *
+ * @Email       : nitianzero@gmail.com                         *
+ * @Date        : 2024/10/18                                     *
+ * @Description : Brief description of the file's purpose      *
+ *                                                             *
+ * Copyright (c) 2024 Koschei                                  *
+ * All rights reserved.                                        *
+ *                                                             *
+ ***************************************************************/
+
 #pragma once
 
 #include "sql/optimizer/rewrite_rule.h"

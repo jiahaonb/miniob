@@ -1,3 +1,15 @@
+/***************************************************************
+ *                                                             *
+ * @Author      : Koschei                                      *
+ * @Email       : nitianzero@gmail.com                         *
+ * @Date        : 2024/9/29                                    *
+ * @Description : ShowIndexExecutor source file                *
+ *                                                             *
+ * Copyright (c) 2024 Koschei                                  *
+ * All rights reserved.                                        *
+ *                                                             *
+ ***************************************************************/
+
 #include "sql/executor/show_index_executor.h"
 #include "sql/stmt/stmt.h"
 #include "event/session_event.h"

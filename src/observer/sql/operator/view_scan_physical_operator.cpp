@@ -1,3 +1,15 @@
+/***************************************************************
+ *                                                             *
+ * @Author      : Koschei                                      *
+ * @Email       : nitianzero@gmail.com                         *
+ * @Date        : 2024/10/13                                     *
+ * @Description : Brief description of the file's purpose      *
+ *                                                             *
+ * Copyright (c) 2024 Koschei                                  *
+ * All rights reserved.                                        *
+ *                                                             *
+ ***************************************************************/
+
 #include "sql/operator/view_scan_physical_operator.h"
 #include "event/sql_debug.h"
 #include "storage/table/table.h"

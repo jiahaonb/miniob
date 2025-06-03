@@ -1,3 +1,15 @@
+/***************************************************************
+ *                                                             *
+ * @Author      : Koschei                                      *
+ * @Email       : nitianzero@gmail.com                         *
+ * @Date        : 2024/10/18                                     *
+ * @Description : Brief description of the file's purpose      *
+ *                                                             *
+ * Copyright (c) 2024 Koschei                                  *
+ * All rights reserved.                                        *
+ *                                                             *
+ ***************************************************************/
+
 #include "sql/operator/logical_operator.h"
 #include "sql/expr/tuple.h"
 #include "sql/operator/limit_logical_operator.h"
