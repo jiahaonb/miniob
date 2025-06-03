@@ -185,7 +185,17 @@ RC LogicalPlanGenerator::create_plan(SelectStmt *select_stmt, unique_ptr<Logical
 
 RC LogicalPlanGenerator::create_plan(FilterStmt *filter_stmt, unique_ptr<LogicalOperator> &logical_operator)
 {
-  RC                                  rc = RC::SUCCESS;
+  RC rc = RC::SUCCESS;
+  
+  // 首先检查新的Expression-based条件
+  if (filter_stmt != nullptr && !filter_stmt->condition_empty()) {
+    // 直接使用std::move从FilterStmt中获取condition，避免clone
+    unique_ptr<Expression> condition = std::move(const_cast<FilterStmt*>(filter_stmt)->condition());
+    logical_operator = make_unique<PredicateLogicalOperator>(std::move(condition));
+    return rc;
+  }
+  
+  // 旧的FilterUnit系统逻辑保持不变
   vector<unique_ptr<Expression>> cmp_exprs;
   const vector<FilterUnit *>    &filter_units = filter_stmt->filter_units();
   for (const FilterUnit *filter_unit : filter_units) {

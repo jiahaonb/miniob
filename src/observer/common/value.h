@@ -101,7 +101,9 @@ public:
   string to_string() const;
 
   int compare(const Value &other) const;
-  bool LIKE(const Value &other) const;
+  bool get_boolean() const;
+  
+  RC LIKE(const Value &other, bool &result) const;
 
   const char *data() const;
 
@@ -116,7 +118,6 @@ public:
   int    get_int() const;
   float  get_float() const;
   string get_string() const;
-  bool   get_boolean() const;
   Date   get_date() const;
 
 

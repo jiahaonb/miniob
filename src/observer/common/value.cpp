@@ -252,8 +252,13 @@ int Value::compare(const Value &other) const
   return DataType::type_instance(this->attr_type_)->compare(*this, other);
 }
 
-bool Value::LIKE(const Value &other) const
-{
+RC Value::LIKE(const Value &other, bool &result) const {
+  LOG_INFO("LIKE method called: %s LIKE %s", this->to_string().c_str(), other.to_string().c_str());
+  
+  if (this->attr_type() != AttrType::CHARS || other.attr_type() != AttrType::CHARS) {
+    return RC::INVALID_ARGUMENT;
+  }
+
   const string  left_str  = this->get_string();
   const string &right_str = other.get_string();
 
@@ -262,7 +267,8 @@ bool Value::LIKE(const Value &other) const
   regex_str        = std::regex_replace(regex_str, std::regex("_"), ".");
 
   std::regex regex_pattern(regex_str);
-  return std::regex_match(left_str, regex_pattern);
+  result = std::regex_match(left_str, regex_pattern);
+  return RC::SUCCESS;
 }
 
 int Value::get_int() const

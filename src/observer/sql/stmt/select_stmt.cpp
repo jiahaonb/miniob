@@ -92,9 +92,18 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
   RC          rc          = RC::SUCCESS;
   
   if (select_sql.conditions != nullptr) {
-    // TODO: 这里需要适配新的Expression类型，当前暂时跳过条件处理
-    LOG_WARN("SELECT with conditions not yet supported after LIKE migration");
-    return RC::UNIMPLEMENTED;
+    // 使用新的Expression-based处理方式
+    ExpressionBinder expression_binder(binder_context);
+    vector<unique_ptr<Expression>> bound_conditions;
+    rc = expression_binder.bind_expression(select_sql.conditions, bound_conditions);
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("bind condition expression failed. rc=%s", strrc(rc));
+      return rc;
+    }
+    
+    // 使用新的Expression-based FilterStmt::create方法
+    unique_ptr<Expression> bound_condition = std::move(bound_conditions[0]);
+    rc = FilterStmt::create(db, default_table, &table_map, bound_condition, filter_stmt);
   } else {
     rc = FilterStmt::create(db, default_table, &table_map, nullptr, 0, filter_stmt);
   }

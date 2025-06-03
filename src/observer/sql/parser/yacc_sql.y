@@ -97,6 +97,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
         FROM
         WHERE
         AND
+        OR
         NOT
         LIKE
         INNER
@@ -555,9 +556,6 @@ expression:
     | expression '/' expression {
       $$ = create_arithmetic_expression(ArithmeticExpr::Type::DIV, $1, $3, sql_string, &@$);
     }
-    | expression comp_op expression {
-      $$ = new ComparisonExpr($2, unique_ptr<Expression>($1), unique_ptr<Expression>($3));
-    }
     | LBRACE expression RBRACE {
       $$ = $2;
       $$->set_name(token_name(sql_string, &@$));
@@ -627,7 +625,15 @@ where:
 condition:
     expression comp_op expression
     {
-      $$ = new ComparisonExpr($2, unique_ptr<Expression>($1), unique_ptr<Expression>($3));
+      $$ = new ComparisonExpr($2, $1, $3);
+    }
+    | condition AND condition
+    {
+      $$ = new ConjunctionExpr(ConjunctionExpr::Type::AND, $1, $3);
+    }
+    | condition OR condition
+    {
+      $$ = new ConjunctionExpr(ConjunctionExpr::Type::OR, $1, $3);
     }
     ;
 

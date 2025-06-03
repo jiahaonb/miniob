@@ -1,0 +1,11 @@
+CREATE TABLE users (id INT, name CHAR(20));
+INSERT INTO users VALUES (1, 'Alice');
+INSERT INTO users VALUES (2, 'Bob');
+INSERT INTO users VALUES (3, 'Charlie');
+INSERT INTO users VALUES (4, 'David');
+SELECT * FROM users;
+SELECT * FROM users WHERE name LIKE 'A%';
+SELECT * FROM users WHERE name LIKE '%a%';
+SELECT name FROM users WHERE name LIKE 'Ch%';
+SELECT * FROM users WHERE name NOT LIKE 'A%';
+exit; 

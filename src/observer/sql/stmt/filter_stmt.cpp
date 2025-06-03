@@ -150,3 +150,25 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, unordered_map<st
   // 检查两个类型是否能够比较
   return rc;
 }
+
+// 新的Expression-based create方法
+RC FilterStmt::create(Db *db, Table *default_table, unordered_map<string, Table *> *tables,
+    std::unique_ptr<Expression> &condition, FilterStmt *&stmt)
+{
+  RC rc = RC::SUCCESS;
+  stmt  = nullptr;
+  
+  // 1、没有条件直接返回
+  if (nullptr == condition) {
+    return rc;
+  }
+
+  // 2、检查条件的合法性 - 由于基础版本的ExpressionBinder可能不完全相同，我们简化处理
+  // 基础版本中，condition已经在select_stmt中被bind过了，所以我们直接使用
+  
+  FilterStmt *tmp_stmt = new FilterStmt();
+  tmp_stmt->condition_ = std::move(condition);
+  
+  stmt = tmp_stmt;
+  return rc;
+}

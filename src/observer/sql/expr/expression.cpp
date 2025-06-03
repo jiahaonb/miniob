@@ -112,6 +112,10 @@ RC CastExpr::try_get_value(Value &result) const
 
 ////////////////////////////////////////////////////////////////////////////////
 
+ComparisonExpr::ComparisonExpr(CompOp comp, Expression *left, Expression *right)
+    : comp_(comp), left_(unique_ptr<Expression>(left)), right_(unique_ptr<Expression>(right))
+{}
+
 ComparisonExpr::ComparisonExpr(CompOp comp, unique_ptr<Expression> left, unique_ptr<Expression> right)
     : comp_(comp), left_(std::move(left)), right_(std::move(right))
 {}
@@ -143,10 +147,20 @@ RC ComparisonExpr::compare_value(const Value &left, const Value &right, bool &re
       result = (cmp_result > 0);
     } break;
     case LIKE_OP: {
-      result = left.LIKE(right);
+      bool like_result;
+      RC rc = left.LIKE(right, like_result);
+      if (rc != RC::SUCCESS) {
+        return rc;
+      }
+      result = like_result;
     } break;
     case NOT_LIKE_OP: {
-      result = !left.LIKE(right);
+      bool like_result;
+      RC rc = left.LIKE(right, like_result);
+      if (rc != RC::SUCCESS) {
+        return rc;
+      }
+      result = !like_result;
     } break;
     default: {
       LOG_WARN("unsupported comparison. %d", comp_);
