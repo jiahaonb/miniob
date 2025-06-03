@@ -531,6 +531,12 @@ func_expr:
         $$ = new UnboundFunctionExpr($1, std::move(*$3));
         $$->set_name(token_name(sql_string, &@$));
     }
+    | ID LBRACE RBRACE
+    {
+        vector<unique_ptr<Expression>> empty_args;
+        $$ = new UnboundFunctionExpr($1, std::move(empty_args));
+        $$->set_name(token_name(sql_string, &@$));
+    }
     ;
 
 rel_attr:
