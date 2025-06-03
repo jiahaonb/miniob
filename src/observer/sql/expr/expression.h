@@ -331,6 +331,7 @@ public:
 
 public:
   ConjunctionExpr(Type type, vector<unique_ptr<Expression>> &children);
+  ConjunctionExpr(Type type, Expression *left, Expression *right);
   virtual ~ConjunctionExpr() = default;
 
   ExprType type() const override { return ExprType::CONJUNCTION; }

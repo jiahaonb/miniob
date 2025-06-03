@@ -47,8 +47,16 @@ RC DeleteStmt::create(Db *db, const DeleteSqlNode &delete_sql, Stmt *&stmt)
   table_map.insert(pair<string, Table *>(string(table_name), table));
 
   FilterStmt *filter_stmt = nullptr;
-  RC          rc          = FilterStmt::create(
-      db, table, &table_map, delete_sql.conditions.data(), static_cast<int>(delete_sql.conditions.size()), filter_stmt);
+  RC          rc          = RC::SUCCESS;
+  
+  if (delete_sql.conditions != nullptr) {
+    // TODO: 这里需要适配新的Expression类型，当前暂时跳过条件处理
+    LOG_WARN("DELETE with conditions not yet supported after LIKE migration");
+    return RC::UNIMPLEMENTED;
+  } else {
+    rc = FilterStmt::create(db, table, &table_map, nullptr, 0, filter_stmt);
+  }
+
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to create filter statement. rc=%d:%s", rc, strrc(rc));
     return rc;

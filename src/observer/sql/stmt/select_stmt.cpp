@@ -89,12 +89,16 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt)
 
   // create filter statement in `where` statement
   FilterStmt *filter_stmt = nullptr;
-  RC          rc          = FilterStmt::create(db,
-      default_table,
-      &table_map,
-      select_sql.conditions.data(),
-      static_cast<int>(select_sql.conditions.size()),
-      filter_stmt);
+  RC          rc          = RC::SUCCESS;
+  
+  if (select_sql.conditions != nullptr) {
+    // TODO: 这里需要适配新的Expression类型，当前暂时跳过条件处理
+    LOG_WARN("SELECT with conditions not yet supported after LIKE migration");
+    return RC::UNIMPLEMENTED;
+  } else {
+    rc = FilterStmt::create(db, default_table, &table_map, nullptr, 0, filter_stmt);
+  }
+
   if (rc != RC::SUCCESS) {
     LOG_WARN("cannot construct filter stmt");
     return rc;
