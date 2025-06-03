@@ -97,6 +97,12 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt,
     }
   }
 
+  // 检查GROUP BY功能是否被使用（已屏蔽）
+  if (!select_sql.group_by.empty()) {
+    LOG_WARN("GROUP BY功能已被屏蔽，不支持该操作");
+    return RC::UNIMPLEMENTED;
+  }
+
   vector<unique_ptr<Expression>> group_by_expressions;
   for (unique_ptr<Expression> &expression : select_sql.group_by) {
     RC rc = expression_binder.bind_expression(expression, group_by_expressions);
@@ -104,6 +110,12 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt,
       LOG_INFO("bind expression failed. rc=%s", strrc(rc));
       return rc;
     }
+  }
+
+  // 检查ORDER BY功能是否被使用（已屏蔽）
+  if (!select_sql.order_by.empty()) {
+    LOG_WARN("ORDER BY功能已被屏蔽，不支持该操作");
+    return RC::UNIMPLEMENTED;
   }
 
   vector<unique_ptr<Expression>> order_by_expressions;

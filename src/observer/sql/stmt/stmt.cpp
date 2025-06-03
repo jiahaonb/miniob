@@ -86,11 +86,13 @@ RC Stmt::create_stmt(Db *db, ParsedSqlNode &sql_node, Stmt *&stmt)
     }
 
     case SCF_CREATE_VIEW: {
-      return CreateViewStmt::create(db, sql_node.create_view, stmt);
+      LOG_WARN("CREATE VIEW功能已被屏蔽");
+      return RC::UNIMPLEMENTED;
     }
 
     case SCF_DROP_VIEW: {
-      return DropViewStmt::create(db, sql_node.drop_view, stmt);
+      LOG_WARN("DROP VIEW功能已被屏蔽");
+      return RC::UNIMPLEMENTED;
     }
 
     case SCF_DESC_TABLE: {

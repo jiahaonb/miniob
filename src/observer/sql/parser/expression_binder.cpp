@@ -477,6 +477,7 @@ RC ExpressionBinder::bind_function_expression(
   AggregateFunctionType aggregate_type;
   RC                    rc = AggregateExpr::type_from_string(function_name, aggregate_type);
   if (OB_SUCC(rc)) {
+    // 聚合函数功能保留
     if (unbound_function_expr->args().size() != 1) {
       return RC::INVALID_ARGUMENT;
     }
@@ -518,25 +519,12 @@ RC ExpressionBinder::bind_function_expression(
     return RC::SUCCESS;
   }
 
+  // 普通函数功能已被屏蔽
   NormalFunctionType func_type;
   rc = NormalFunctionExpr::type_from_string(function_name, func_type);
   if (OB_SUCC(rc)) {
-    vector<unique_ptr<Expression>> child_bound_expressions;
-    for (auto &child_expr : unbound_function_expr->args()) {
-      rc = bind_expression(child_expr, child_bound_expressions);
-      if (OB_FAIL(rc)) {
-        return rc;
-      }
-    }
-    unbound_function_expr->set_args(std::move(child_bound_expressions));
-
-    string name      = unbound_function_expr->name();
-    auto   func_expr = make_unique<NormalFunctionExpr>(
-        func_type, unbound_function_expr->function_name(), std::move(unbound_function_expr->args()));
-    func_expr->set_name(name);
-    func_expr->set_alias(unbound_function_expr->alias());
-    bound_expressions.emplace_back(std::move(func_expr));
-    return RC::SUCCESS;
+    LOG_WARN("普通函数功能已被屏蔽，不支持函数: %s", function_name);
+    return RC::UNIMPLEMENTED;
   }
 
   return RC::UNKNOWN_FUNCTION;
