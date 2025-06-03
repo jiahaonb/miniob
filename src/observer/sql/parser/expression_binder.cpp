@@ -464,17 +464,29 @@ RC ExpressionBinder::bind_function_expression(
   AggregateFunctionType aggregate_type;
   RC rc = AggregateExpr::type_from_string(function_name, aggregate_type);
   if (RC::SUCCESS == rc) {
+    // 检查参数数量
+    if (unbound_function_expr->args().size() == 0) {
+      LOG_WARN("aggregate function %s requires arguments", function_name);
+      return RC::INVALID_ARGUMENT;
+    }
+    
     if (unbound_function_expr->args().size() != 1) {
       LOG_WARN("aggregate function %s requires exactly 1 argument, but got %d", function_name, unbound_function_expr->args().size());
       return RC::INVALID_ARGUMENT;
     }
+    
     unique_ptr<Expression> &child_expr = unbound_function_expr->args().front();
     vector<unique_ptr<Expression>> child_bound_expressions;
 
-    if (child_expr->type() == ExprType::STAR && aggregate_type == AggregateFunctionType::AGG_COUNT) {
+    // 检查特殊情况：只有COUNT可以使用*，其他聚合函数不能使用*
+    if (child_expr->type() == ExprType::STAR) {
+      if (aggregate_type != AggregateFunctionType::AGG_COUNT) {
+        LOG_WARN("aggregate function %s cannot use * as argument", function_name);
+        return RC::INVALID_ARGUMENT;
+      }
+      // count(*) 的特殊处理
       ValueExpr *value_expr = new ValueExpr(Value(1));
       child_expr.reset(value_expr);
-      // count(*) 输出星号
       child_expr->set_name("*");
       unbound_function_expr->set_name(unbound_function_expr->to_string());
     } else {
