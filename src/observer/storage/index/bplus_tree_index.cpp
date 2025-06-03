@@ -31,17 +31,21 @@ RC BplusTreeIndex::create(Table *table, const char *file_name, const IndexMeta &
 
   // Determine attribute type for B+tree
   AttrType attr_type;
+  int attr_length;
+  
   if (index_meta.fields().size() > 1) {
     // For multi-field indexes, treat as binary data (no special string handling)
     attr_type = AttrType::INTS;  // Use INTS to avoid string-specific processing
+    attr_length = index_meta.fields_total_len();
   } else {
     // For single-field indexes, use the field's actual type
     attr_type = index_meta.fields()[0].type();
+    attr_length = index_meta.fields()[0].len();
   }
 
   BufferPoolManager &bpm = table->db()->buffer_pool_manager();
   RC                 rc  = index_handler_.create(table->db()->log_handler(), bpm, file_name, 
-                                                 attr_type, index_meta.fields_total_len());
+                                                 attr_type, attr_length);
   if (RC::SUCCESS != rc) {
     LOG_WARN("Failed to create index_handler, file_name:%s, index:%s, rc:%s",
         file_name, index_meta.name(), strrc(rc));
