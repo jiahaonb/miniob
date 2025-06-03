@@ -464,14 +464,16 @@ RC ExpressionBinder::bind_function_expression(
   AggregateFunctionType aggregate_type;
   RC rc = AggregateExpr::type_from_string(function_name, aggregate_type);
   if (RC::SUCCESS == rc) {
-    // 检查参数数量
+    // 1. 检查空参数错误
     if (unbound_function_expr->args().size() == 0) {
-      LOG_WARN("aggregate function %s requires arguments", function_name);
+      LOG_WARN("aggregate function %s requires arguments, but got 0", function_name);
       return RC::INVALID_ARGUMENT;
     }
     
-    if (unbound_function_expr->args().size() != 1) {
-      LOG_WARN("aggregate function %s requires exactly 1 argument, but got %d", function_name, unbound_function_expr->args().size());
+    // 2. 检查多参数错误
+    if (unbound_function_expr->args().size() > 1) {
+      LOG_WARN("aggregate function %s requires exactly 1 argument, but got %d", 
+               function_name, unbound_function_expr->args().size());
       return RC::INVALID_ARGUMENT;
     }
     
@@ -490,9 +492,12 @@ RC ExpressionBinder::bind_function_expression(
       child_expr->set_name("*");
       unbound_function_expr->set_name(unbound_function_expr->to_string());
     } else {
+      // 3. 检查不存在的列错误
       rc = bind_expression(child_expr, child_bound_expressions);
       if (RC::SUCCESS != rc) {
-        return rc;
+        LOG_WARN("failed to bind child expression in aggregate function %s: %s", 
+                 function_name, strrc(rc));
+        return rc;  // 这里会返回字段不存在等具体错误
       }
 
       if (child_bound_expressions.size() != 1) {
@@ -509,6 +514,7 @@ RC ExpressionBinder::bind_function_expression(
     aggregate_expr->set_name(unbound_function_expr->name());
     rc = check_aggregate_expression(*aggregate_expr);
     if (RC::SUCCESS != rc) {
+      LOG_WARN("aggregate expression validation failed: %s", strrc(rc));
       return rc;
     }
     bound_expressions.emplace_back(std::move(aggregate_expr));
