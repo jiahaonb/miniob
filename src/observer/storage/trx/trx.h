@@ -17,7 +17,7 @@ See the Mulan PSL v2 for more details. */
 #include <stddef.h>
 #include <utility>
 
-#include "common/sys/rc.h"
+#include "src/common/sys/rc.h"
 #include "common/lang/mutex.h"
 #include "sql/parser/parse.h"
 #include "storage/field/field_meta.h"
@@ -57,23 +57,29 @@ public:
   };
 
 public:
-  Operation(Type type, Table *table, const RID &rid)
-      : type_(type), table_(table), page_num_(rid.page_num), slot_num_(rid.slot_num)
+  Operation(Type type, BaseTable *table, const RID &rid) : type_(type), table_(table), rid_(rid) {}
+  Operation(Type type, BaseTable *table, const RID &rid, Record &old_record, Record &updated_record)
+      : type_(type), table_(table), rid_(rid), old_record_(old_record), updated_record_(updated_record)
   {}
 
-  Type    type() const { return type_; }
-  int32_t table_id() const { return table_->table_id(); }
-  Table  *table() const { return table_; }
-  PageNum page_num() const { return page_num_; }
-  SlotNum slot_num() const { return slot_num_; }
+  Type          type() const { return type_; }
+  int32_t       table_id() const { return table_->table_id(); }
+  BaseTable    *table() const { return table_; }
+  RID           rid() const { return rid_; }
+  PageNum       page_num() const { return rid_.page_num; }
+  SlotNum       slot_num() const { return rid_.slot_num; }
+  const Record &old_record() const { return old_record_; }
+  const Record &updated_record() const { return updated_record_; }
 
 private:
   ///< 操作的哪张表。这里直接使用表其实并不准确，因为表中的索引也可能有日志
   Type type_;
 
-  Table  *table_ = nullptr;
-  PageNum page_num_;  // TODO use RID instead of page num and slot num
-  SlotNum slot_num_;
+  BaseTable *table_ = nullptr;
+  RID        rid_;
+  // update
+  Record old_record_{};
+  Record updated_record_{};
 };
 
 class OperationHasher
@@ -143,9 +149,10 @@ public:
   Trx()          = default;
   virtual ~Trx() = default;
 
-  virtual RC insert_record(Table *table, Record &record)                    = 0;
-  virtual RC delete_record(Table *table, Record &record)                    = 0;
-  virtual RC visit_record(Table *table, Record &record, ReadWriteMode mode) = 0;
+  virtual RC insert_record(BaseTable *table, Record &record)                         = 0;
+  virtual RC delete_record(BaseTable *table, Record &record)                         = 0;
+  virtual RC update_record(BaseTable *table, Record &old_record, Record &new_record) = 0;
+  virtual RC visit_record(BaseTable *table, Record &record, ReadWriteMode mode)      = 0;
 
   virtual RC start_if_need() = 0;
   virtual RC commit()        = 0;

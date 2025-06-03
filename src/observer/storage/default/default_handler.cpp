@@ -14,6 +14,9 @@ See the Mulan PSL v2 for more details. */
 
 #include "storage/default/default_handler.h"
 
+#include <string>
+#include <filesystem>
+
 #include "common/lang/string.h"
 #include "common/log/log.h"
 #include "common/os/path.h"
@@ -24,7 +27,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/table/table.h"
 #include "storage/trx/trx.h"
 
-using namespace std;
+// using namespace std;
 
 DefaultHandler::DefaultHandler() {}
 
@@ -41,9 +44,9 @@ RC DefaultHandler::init(const char *base_dir, const char *trx_kit_name, const ch
     return RC::INTERNAL;
   }
 
-  base_dir_ = base_dir;
-  db_dir_   = db_dir;
-  trx_kit_name_ = trx_kit_name;
+  base_dir_         = base_dir;
+  db_dir_           = db_dir;
+  trx_kit_name_     = trx_kit_name;
   log_handler_name_ = log_handler_name;
 
   const char *sys_db = "sys";
@@ -99,7 +102,27 @@ RC DefaultHandler::create_db(const char *dbname)
   return RC::SUCCESS;
 }
 
-RC DefaultHandler::drop_db(const char *dbname) { return RC::INTERNAL; }
+RC DefaultHandler::drop_db(const char *dbname)
+{
+  if (dbname == nullptr || common::is_blank(dbname)) {
+    LOG_WARN("Invalid db name");
+    return RC::INVALID_ARGUMENT;
+  }
+
+  // 如果对应目录不存在，返回错误
+  filesystem::path dbpath = db_dir_ / dbname;
+  if (!filesystem::is_directory(dbpath)) {
+    LOG_WARN("Db not exists: %s", dbname);
+    return RC::SCHEMA_DB_NOT_EXIST;
+  }
+
+  error_code ec;
+  if (!filesystem::remove(dbpath, ec)) {
+    LOG_ERROR("Drop db fail: %s. error=%s", dbpath.c_str(), strerror(errno));
+    return RC::IOERR_WRITE;
+  }
+  return RC::SUCCESS;
+}
 
 RC DefaultHandler::open_db(const char *dbname)
 {
@@ -151,7 +174,7 @@ Db *DefaultHandler::find_db(const char *dbname) const
   return iter->second;
 }
 
-Table *DefaultHandler::find_table(const char *dbname, const char *table_name) const
+BaseTable *DefaultHandler::find_table(const char *dbname, const char *table_name) const
 {
   if (dbname == nullptr || table_name == nullptr) {
     LOG_WARN("Invalid argument. dbname=%p, table_name=%p", dbname, table_name);

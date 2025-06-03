@@ -1,37 +1,24 @@
-/* Copyright (c) 2021 OceanBase and/or its affiliates. All rights reserved.
-miniob is licensed under Mulan PSL v2.
-You can use this software according to the terms and conditions of the Mulan PSL v2.
-You may obtain a copy of Mulan PSL v2 at:
-         http://license.coscl.org.cn/MulanPSL2
-THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-See the Mulan PSL v2 for more details. */
 
 #pragma once
 
-#include <string>
-#include <vector>
 #include "sql/operator/physical_operator.h"
-#include "storage/record/record.h"
 
-using namespace std;
-
-class Table;
 class Trx;
+class UpdateStmt;
 
 /**
- * @brief 更新物理算子
+ * @brief 物理算子，更新
  * @ingroup PhysicalOperator
  */
 class UpdatePhysicalOperator : public PhysicalOperator
 {
 public:
-  UpdatePhysicalOperator(Table *table, const Value& value, int value_offset, int field_len)
-      : table_(table), value_(value), value_offset_(value_offset), field_len_(field_len)
+  UpdatePhysicalOperator(
+      BaseTable *table, std::vector<FieldMeta> field_metas, std::vector<std::unique_ptr<Expression>> values)
+      : table_(table), field_metas_(std::move(field_metas)), values_(std::move(values))
   {}
 
-  virtual ~UpdatePhysicalOperator() = default;
+  ~UpdatePhysicalOperator() override = default;
 
   PhysicalOperatorType type() const override { return PhysicalOperatorType::UPDATE; }
 
@@ -42,10 +29,12 @@ public:
   Tuple *current_tuple() override { return nullptr; }
 
 private:
-  Table *table_ = nullptr;
-  Value value_;
-  int value_offset_;
-  int field_len_;
-  Trx *trx_ = nullptr;
-  vector<Record> records_; ///< 需要更新的记录集合
-}; 
+  void rollback();
+
+  Trx                                     *trx_   = nullptr;
+  BaseTable                               *table_ = nullptr;
+  std::vector<FieldMeta>                   field_metas_;
+  std::vector<std::unique_ptr<Expression>> values_;
+  std::vector<Record>                      records_;
+  vector<pair<Record, Record>>             log_records;
+};

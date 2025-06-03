@@ -24,7 +24,7 @@ See the Mulan PSL v2 for more details. */
 class ProjectPhysicalOperator : public PhysicalOperator
 {
 public:
-  ProjectPhysicalOperator(vector<unique_ptr<Expression>> &&expressions);
+  ProjectPhysicalOperator(std::vector<std::unique_ptr<Expression>> &&expressions);
 
   virtual ~ProjectPhysicalOperator() = default;
 
@@ -41,6 +41,6 @@ public:
   RC tuple_schema(TupleSchema &schema) const override;
 
 private:
-  vector<unique_ptr<Expression>>          expressions_;
-  ExpressionTuple<unique_ptr<Expression>> tuple_;
+  std::vector<std::unique_ptr<Expression>>     expressions_;
+  ExpressionTuple<std::unique_ptr<Expression>> tuple_;
 };

@@ -14,53 +14,36 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
-#include "common/sys/rc.h"
+#include "src/common/sys/rc.h"
 #include "sql/stmt/stmt.h"
+#include "storage/field/field_meta.h"
 
-class Table;
+class BaseTable;
 class FilterStmt;
+
 /**
  * @brief 更新语句
  * @ingroup Statement
  */
-class UpdateStmt : public Stmt 
+class UpdateStmt : public Stmt
 {
 public:
   UpdateStmt() = default;
-  UpdateStmt(Table *table,const Value &value, int value_offset, int field_len, FilterStmt* filter_stmt);
-  StmtType type() const override 
-  {
-    return StmtType::UPDATE;
-  }
-public:
+  UpdateStmt(BaseTable *table, std::vector<FieldMeta> field_metas, std::vector<std::unique_ptr<Expression>> values,
+      FilterStmt *filter_stmt);
+
+  StmtType type() const override { return StmtType::UPDATE; }
+
+  BaseTable                                *table() const { return table_; }
+  std::vector<FieldMeta>                   &field_metas() { return field_metas_; }
+  std::vector<std::unique_ptr<Expression>> &values() { return values_; }
+  FilterStmt                               *filter_stmt() const { return filter_stmt_; }
+
   static RC create(Db *db, UpdateSqlNode &update_sql, Stmt *&stmt);
 
-public:
-  Table *table() const
-  {
-    return table_;
-  }
-  const Value& value() const
-  {
-    return value_;
-  }
-  int value_offset() const
-  {
-    return value_offset_;
-  }
-  int field_len() const
-  {
-    return field_len_;
-  }
-  FilterStmt* filter_stmt() const 
-  {
-    return filter_stmt_;
-  }
-
 private:
-  Table *table_ = nullptr;
-  const Value& value_;
-  int value_offset_ = 0; //后面修改Record要用，但是多个Record别的字段可能不同，所以只能延迟修改, 这里做了一点改动
-  int field_len_ = 0;    // 字段长度
-  FilterStmt* filter_stmt_ = nullptr;
+  BaseTable                               *table_ = nullptr;
+  std::vector<FieldMeta>                   field_metas_;
+  std::vector<std::unique_ptr<Expression>> values_;
+  FilterStmt                              *filter_stmt_ = nullptr;
 };

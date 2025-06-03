@@ -12,15 +12,18 @@ See the Mulan PSL v2 for more details. */
 // Created by Wangyunlai on 2022/5/22.
 //
 
-#include "sql/stmt/stmt.h"
 #include "common/log/log.h"
+#include "drop_table_stmt.h"
+#include "sql/stmt/stmt.h"
+
+#include "create_view_stmt.h"
+#include "drop_view_stmt.h"
+#include "sql/stmt/update_stmt.h"
 #include "sql/stmt/calc_stmt.h"
 #include "sql/stmt/create_index_stmt.h"
 #include "sql/stmt/create_table_stmt.h"
 #include "sql/stmt/delete_stmt.h"
 #include "sql/stmt/desc_table_stmt.h"
-#include "sql/stmt/drop_table_stmt.h"
-// #include "sql/stmt/drop_index_stmt.h" // Commented out: File does not exist yet
 #include "sql/stmt/exit_stmt.h"
 #include "sql/stmt/explain_stmt.h"
 #include "sql/stmt/help_stmt.h"
@@ -29,9 +32,9 @@ See the Mulan PSL v2 for more details. */
 #include "sql/stmt/select_stmt.h"
 #include "sql/stmt/set_variable_stmt.h"
 #include "sql/stmt/show_tables_stmt.h"
+#include "sql/stmt/show_index_stmt.h"
 #include "sql/stmt/trx_begin_stmt.h"
 #include "sql/stmt/trx_end_stmt.h"
-#include "sql/stmt/update_stmt.h"
 
 bool stmt_type_ddl(StmtType type)
 {
@@ -47,6 +50,7 @@ bool stmt_type_ddl(StmtType type)
     }
   }
 }
+
 RC Stmt::create_stmt(Db *db, ParsedSqlNode &sql_node, Stmt *&stmt)
 {
   stmt = nullptr;
@@ -81,9 +85,12 @@ RC Stmt::create_stmt(Db *db, ParsedSqlNode &sql_node, Stmt *&stmt)
       return DropTableStmt::create(db, sql_node.drop_table, stmt);
     }
 
-    case SCF_DROP_INDEX: {
-      LOG_WARN("DropIndexStmt::create is not yet fully migrated/implemented.");
-      return RC::UNIMPLEMENTED;
+    case SCF_CREATE_VIEW: {
+      return CreateViewStmt::create(db, sql_node.create_view, stmt);
+    }
+
+    case SCF_DROP_VIEW: {
+      return DropViewStmt::create(db, sql_node.drop_view, stmt);
     }
 
     case SCF_DESC_TABLE: {
@@ -96,6 +103,10 @@ RC Stmt::create_stmt(Db *db, ParsedSqlNode &sql_node, Stmt *&stmt)
 
     case SCF_SHOW_TABLES: {
       return ShowTablesStmt::create(db, stmt);
+    }
+
+    case SCF_SHOW_INDEX: {
+      return ShowIndexStmt::create(db, sql_node.show_index, stmt);
     }
 
     case SCF_BEGIN: {

@@ -16,7 +16,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <stdint.h>
 
-#include "common/sys/rc.h"
+#include "src/common/sys/rc.h"
 #include "common/lang/vector.h"
 
 /**

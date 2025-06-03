@@ -14,7 +14,8 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
-#include "common/sys/rc.h"
+#include <string>
+#include "src/common/sys/rc.h"
 
 class LogEntry;
 

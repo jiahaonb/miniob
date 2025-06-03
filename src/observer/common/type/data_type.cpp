@@ -12,22 +12,18 @@ See the Mulan PSL v2 for more details. */
 #include "common/type/float_type.h"
 #include "common/type/integer_type.h"
 #include "common/type/data_type.h"
+#include "common/type/boolean_type.h"
+#include "common/type/null_type.h"
 #include "common/type/vector_type.h"
-#include "common/value.h"
 
 array<unique_ptr<DataType>, static_cast<int>(AttrType::MAXTYPE)> DataType::type_instances_ = {
     make_unique<DataType>(AttrType::UNDEFINED),
     make_unique<CharType>(),
     make_unique<IntegerType>(),
     make_unique<FloatType>(),
-    make_unique<VectorType>(),
-    make_unique<DataType>(AttrType::BOOLEANS),
+    make_unique<BooleanType>(),
     make_unique<DateType>(),
+    make_unique<NullType>(),
+    make_unique<TextType>(),
+    make_unique<VectorType>(),
 };
-
-RC DataType::cast_to(const Value &val, AttrType type, Value &result) const { 
-    LOG_WARN("使用直接转换的cast_to, source %u, target %u", val.attr_type(), type);
-    result.set_type(type);
-    result.set_data(val.data(), val.length());
-    return RC::SUCCESS;
-}

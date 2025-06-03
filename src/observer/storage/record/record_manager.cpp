@@ -91,6 +91,14 @@ RC RecordPageIterator::next(Record &record)
   return record.rid().slot_num != -1 ? RC::SUCCESS : RC::RECORD_EOF;
 }
 
+RC RecordPageIterator::cleanup()
+{
+  record_page_handler_ = nullptr;
+  page_num_            = BP_INVALID_PAGE_NUM;
+  next_slot_num_       = 0;
+  return RC::SUCCESS;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 RecordPageHandler::~RecordPageHandler() { cleanup(); }
@@ -352,7 +360,7 @@ RC RowRecordPageHandler::delete_record(const RID *rid)
 
 RC RowRecordPageHandler::update_record(const RID &rid, const char *data)
 {
-  ASSERT(rw_mode_ != ReadWriteMode::READ_ONLY, "cannot delete record from page while the page is readonly");
+  ASSERT(rw_mode_ != ReadWriteMode::READ_ONLY, "cannot update record from page while the page is readonly");
 
   if (rid.slot_num >= page_header_->record_capacity) {
     LOG_ERROR("Invalid slot_num %d, exceed page's record capacity, frame=%s, page_header=%s",
@@ -495,7 +503,7 @@ RC RecordFileHandler::init(DiskBufferPool &buffer_pool, LogHandler &log_handler,
   RC rc = init_free_pages();
 
   LOG_INFO("open record file handle done. rc=%s", strrc(rc));
-  return rc;
+  return RC::SUCCESS;
 }
 
 void RecordFileHandler::close()
@@ -666,6 +674,8 @@ RC RecordFileHandler::update_record(const char *data, const RID *rid)
   // insert record是加上 record manager锁，然后拿到指定页面锁再释放record manager锁
   record_page_handler->cleanup();
   if (OB_SUCC(rc)) {
+    // 因为这里已经释放了页面锁，并发时，其它线程可能又把该页面填满了，那就不应该再放入 free_pages_
+    // 中。但是这里可以不关心，因为在查找空闲页面时，会自动过滤掉已经满的页面
     LOG_TRACE("update record on rid{%d,%d} success", rid->page_num, rid->slot_num);
   }
   return rc;
@@ -693,7 +703,7 @@ RC RecordFileHandler::get_record(const RID &rid, Record &record)
   return rc;
 }
 
-RC RecordFileHandler::visit_record(const RID &rid, function<bool(Record &)> updater)
+RC RecordFileHandler::visit_record(const RID &rid, const function<bool(Record &)> &updater)
 {
   unique_ptr<RecordPageHandler> page_handler(RecordPageHandler::create(storage_format_));
 
@@ -851,6 +861,7 @@ RC RecordFileScanner::close_scan()
     record_page_handler_->cleanup();
     delete record_page_handler_;
     record_page_handler_ = nullptr;
+    record_page_iterator_.cleanup();
   }
 
   return RC::SUCCESS;

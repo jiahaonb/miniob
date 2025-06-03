@@ -14,6 +14,9 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include <memory>
+#include <vector>
+
 #include "sql/expr/expression.h"
 
 /**
@@ -34,11 +37,13 @@ enum class LogicalOperatorType
   PREDICATE,   ///< 过滤，就是谓词
   PROJECTION,  ///< 投影，就是select
   JOIN,        ///< 连接
-  UPDATE,      ///< 更新
   INSERT,      ///< 插入
   DELETE,      ///< 删除，删除可能会有子查询
+  UPDATE,      ///< 更新，更新可能会有子查询
   EXPLAIN,     ///< 查看执行计划
   GROUP_BY,    ///< 分组
+  ORDER_BY,    ///< 排序
+  LIMIT,       ///< 限制输出
 };
 
 /**
@@ -53,15 +58,15 @@ public:
 
   virtual LogicalOperatorType type() const = 0;
 
-  void        add_child(unique_ptr<LogicalOperator> oper);
-  auto        children() -> vector<unique_ptr<LogicalOperator>>        &{ return children_; }
-  auto        expressions() -> vector<unique_ptr<Expression>>        &{ return expressions_; }
+  void        add_child(std::unique_ptr<LogicalOperator> oper);
+  auto        children() -> std::vector<std::unique_ptr<LogicalOperator>>        &{ return children_; }
+  auto        expressions() -> std::vector<std::unique_ptr<Expression>>        &{ return expressions_; }
   static bool can_generate_vectorized_operator(const LogicalOperatorType &type);
 
 protected:
-  vector<unique_ptr<LogicalOperator>> children_;  ///< 子算子
+  std::vector<std::unique_ptr<LogicalOperator>> children_;  ///< 子算子
 
   ///< 表达式，比如select中的列，where中的谓词等等，都可以使用表达式来表示
   ///< 表达式能是一个常量，也可以是一个函数，也可以是一个列，也可以是一个子查询等等
-  vector<unique_ptr<Expression>> expressions_;
+  std::vector<std::unique_ptr<Expression>> expressions_;
 };

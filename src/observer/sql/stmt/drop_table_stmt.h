@@ -4,10 +4,8 @@
 #include <vector>
 
 #include "sql/stmt/stmt.h"
-// #include "sql/parser/parse_defs.h" // Included via stmt.h or directly in .cpp
 
 class Db;
-struct DropTableSqlNode; // Forward declaration
 
 /**
  * @brief 表示删除表的语句
@@ -28,4 +26,4 @@ public:
 
 private:
   std::string table_name_;
-}; 
+};
