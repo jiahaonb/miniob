@@ -74,10 +74,10 @@ ParsedSqlNode *create_table_sql_node(char *table_name,
         free(storage_format);
     }
 
-    // 屏蔽 create-table-select 功能
-    // if (create_table_select) {
-    //     create_table.create_table_select = std::make_unique<SelectSqlNode>(std::move(create_table_select->selection));
-    // }
+    // 恢复 create-table-select 功能
+    if (create_table_select) {
+        create_table.create_table_select = std::make_unique<SelectSqlNode>(std::move(create_table_select->selection));
+    }
 
     return parsed_sql_node;
 }
