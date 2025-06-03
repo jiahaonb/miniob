@@ -44,6 +44,6 @@
 	],
 	"indexes" : null,
 	"storage_format" : 1,
-	"table_id" : 4,
+	"table_id" : 5,
 	"table_name" : "aggregation_func"
 }

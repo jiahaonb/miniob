@@ -62,6 +62,10 @@ RC ExpressionBinder::bind_expression(unique_ptr<Expression> &expr, vector<unique
       return bind_aggregate_expression(expr, bound_expressions);
     } break;
 
+    case ExprType::UNBOUND_FUNCTION: {
+      return bind_function_expression(expr, bound_expressions);
+    } break;
+
     case ExprType::FIELD: {
       return bind_field_expression(expr, bound_expressions);
     } break;
@@ -446,4 +450,60 @@ RC ExpressionBinder::bind_aggregate_expression(
 
   bound_expressions.emplace_back(std::move(aggregate_expr));
   return RC::SUCCESS;
+}
+
+RC ExpressionBinder::bind_function_expression(
+    unique_ptr<Expression> &expr, vector<unique_ptr<Expression>> &bound_expressions)
+{
+  if (nullptr == expr) {
+    return RC::SUCCESS;
+  }
+
+  auto unbound_function_expr = static_cast<UnboundFunctionExpr *>(expr.get());
+  const char *function_name = unbound_function_expr->function_name();
+  AggregateFunctionType aggregate_type;
+  RC rc = AggregateExpr::type_from_string(function_name, aggregate_type);
+  if (RC::SUCCESS == rc) {
+    if (unbound_function_expr->args().size() != 1) {
+      LOG_WARN("aggregate function %s requires exactly 1 argument, but got %d", function_name, unbound_function_expr->args().size());
+      return RC::INVALID_ARGUMENT;
+    }
+    unique_ptr<Expression> &child_expr = unbound_function_expr->args().front();
+    vector<unique_ptr<Expression>> child_bound_expressions;
+
+    if (child_expr->type() == ExprType::STAR && aggregate_type == AggregateFunctionType::AGG_COUNT) {
+      ValueExpr *value_expr = new ValueExpr(Value(1));
+      child_expr.reset(value_expr);
+      // count(*) 输出星号
+      child_expr->set_name("*");
+      unbound_function_expr->set_name(unbound_function_expr->to_string());
+    } else {
+      rc = bind_expression(child_expr, child_bound_expressions);
+      if (RC::SUCCESS != rc) {
+        return rc;
+      }
+
+      if (child_bound_expressions.size() != 1) {
+        LOG_WARN("invalid children number of aggregate expression: %d", child_bound_expressions.size());
+        return RC::INVALID_ARGUMENT;
+      }
+
+      if (child_bound_expressions[0].get() != child_expr.get()) {
+        child_expr.reset(child_bound_expressions[0].release());
+      }
+    }
+
+    auto aggregate_expr = make_unique<AggregateExpr>(aggregate_type, std::move(child_expr));
+    aggregate_expr->set_name(unbound_function_expr->name());
+    rc = check_aggregate_expression(*aggregate_expr);
+    if (RC::SUCCESS != rc) {
+      return rc;
+    }
+    bound_expressions.emplace_back(std::move(aggregate_expr));
+    return RC::SUCCESS;
+  }
+
+  // 如果不是聚合函数，返回未知函数错误
+  LOG_WARN("unknown function: %s", function_name);
+  return RC::UNKNOWN_FUNCTION;
 }

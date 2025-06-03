@@ -523,6 +523,13 @@ UnboundAggregateExpr::UnboundAggregateExpr(const char *aggregate_name, Expressio
 {}
 
 ////////////////////////////////////////////////////////////////////////////////
+
+UnboundFunctionExpr::UnboundFunctionExpr(const char *function_name, vector<unique_ptr<Expression>> args)
+    : function_name_(function_name), args_(std::move(args))
+{}
+
+////////////////////////////////////////////////////////////////////////////////
+
 AggregateExpr::AggregateExpr(AggregateFunctionType type, Expression *child) : aggregate_type_(type), child_(child) {}
 
 AggregateExpr::AggregateExpr(AggregateFunctionType type, unique_ptr<Expression> child) : aggregate_type_(type), child_(std::move(child))

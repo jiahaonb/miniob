@@ -39,16 +39,6 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   return expr;
 }
 
-UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
-                                           Expression *child,
-                                           const char *sql_string,
-                                           YYLTYPE *llocp)
-{
-  UnboundAggregateExpr *expr = new UnboundAggregateExpr(aggregate_name, child);
-  expr->set_name(token_name(sql_string, llocp));
-  return expr;
-}
-
 %}
 
 %define api.pure full
@@ -107,11 +97,6 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
         EXPLAIN
         STORAGE
         FORMAT
-        COUNT
-        SUM
-        AVG
-        MAX
-        MIN
         EQ
         LT
         GT
@@ -538,27 +523,13 @@ expression:
     | func_expr {
       $$ = $1;
     }
-    // your code here
     ;
 
 func_expr:
-    COUNT LBRACE '*' RBRACE {
-      $$ = create_aggregate_expression("count", new StarExpr(), sql_string, &@$);
-    }
-    | COUNT LBRACE expression RBRACE {
-      $$ = create_aggregate_expression("count", $3, sql_string, &@$);
-    }
-    | SUM LBRACE expression RBRACE {
-      $$ = create_aggregate_expression("sum", $3, sql_string, &@$);
-    }
-    | AVG LBRACE expression RBRACE {
-      $$ = create_aggregate_expression("avg", $3, sql_string, &@$);
-    }
-    | MAX LBRACE expression RBRACE {
-      $$ = create_aggregate_expression("max", $3, sql_string, &@$);
-    }
-    | MIN LBRACE expression RBRACE {
-      $$ = create_aggregate_expression("min", $3, sql_string, &@$);
+    ID LBRACE expression_list RBRACE
+    {
+        $$ = new UnboundFunctionExpr($1, std::move(*$3));
+        $$->set_name(token_name(sql_string, &@$));
     }
     ;
 
