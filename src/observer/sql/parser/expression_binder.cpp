@@ -364,11 +364,11 @@ RC check_aggregate_expression(AggregateExpr &expression)
   }
 
   // 校验数据类型与聚合类型是否匹配
-  AggregateExpr::Type aggregate_type   = expression.aggregate_type();
-  AttrType            child_value_type = child_expression->value_type();
+  AggregateFunctionType aggregate_type   = expression.aggregate_type();
+  AttrType              child_value_type = child_expression->value_type();
   switch (aggregate_type) {
-    case AggregateExpr::Type::SUM:
-    case AggregateExpr::Type::AVG: {
+    case AggregateFunctionType::AGG_SUM:
+    case AggregateFunctionType::AGG_AVG: {
       // 仅支持数值类型
       if (child_value_type != AttrType::INTS && child_value_type != AttrType::FLOATS) {
         LOG_WARN("invalid child value type for aggregate expression: %d", static_cast<int>(child_value_type));
@@ -376,9 +376,9 @@ RC check_aggregate_expression(AggregateExpr &expression)
       }
     } break;
 
-    case AggregateExpr::Type::COUNT:
-    case AggregateExpr::Type::MAX:
-    case AggregateExpr::Type::MIN: {
+    case AggregateFunctionType::AGG_COUNT:
+    case AggregateFunctionType::AGG_MAX:
+    case AggregateFunctionType::AGG_MIN: {
       // 任何类型都支持
     } break;
   }
@@ -408,7 +408,7 @@ RC ExpressionBinder::bind_aggregate_expression(
 
   auto unbound_aggregate_expr = static_cast<UnboundAggregateExpr *>(expr.get());
   const char *aggregate_name = unbound_aggregate_expr->aggregate_name();
-  AggregateExpr::Type aggregate_type;
+  AggregateFunctionType aggregate_type;
   RC rc = AggregateExpr::type_from_string(aggregate_name, aggregate_type);
   if (OB_FAIL(rc)) {
     LOG_WARN("invalid aggregate name: %s", aggregate_name);
@@ -418,7 +418,7 @@ RC ExpressionBinder::bind_aggregate_expression(
   unique_ptr<Expression>        &child_expr = unbound_aggregate_expr->child();
   vector<unique_ptr<Expression>> child_bound_expressions;
 
-  if (child_expr->type() == ExprType::STAR && aggregate_type == AggregateExpr::Type::COUNT) {
+  if (child_expr->type() == ExprType::STAR && aggregate_type == AggregateFunctionType::AGG_COUNT) {
     ValueExpr *value_expr = new ValueExpr(Value(1));
     child_expr.reset(value_expr);
   } else {

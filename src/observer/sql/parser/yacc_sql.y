@@ -107,6 +107,11 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
         EXPLAIN
         STORAGE
         FORMAT
+        COUNT
+        SUM
+        AVG
+        MAX
+        MIN
         EQ
         LT
         GT
@@ -157,6 +162,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
 %type <cstring>             storage_format
 %type <relation_list>       rel_list
 %type <expression>          expression
+%type <expression>          func_expr
 %type <expression_list>     expression_list
 %type <expression_list>     group_by
 %type <sql_node>            calc_stmt
@@ -529,7 +535,31 @@ expression:
     | '*' {
       $$ = new StarExpr();
     }
+    | func_expr {
+      $$ = $1;
+    }
     // your code here
+    ;
+
+func_expr:
+    COUNT LBRACE '*' RBRACE {
+      $$ = create_aggregate_expression("count", new StarExpr(), sql_string, &@$);
+    }
+    | COUNT LBRACE expression RBRACE {
+      $$ = create_aggregate_expression("count", $3, sql_string, &@$);
+    }
+    | SUM LBRACE expression RBRACE {
+      $$ = create_aggregate_expression("sum", $3, sql_string, &@$);
+    }
+    | AVG LBRACE expression RBRACE {
+      $$ = create_aggregate_expression("avg", $3, sql_string, &@$);
+    }
+    | MAX LBRACE expression RBRACE {
+      $$ = create_aggregate_expression("max", $3, sql_string, &@$);
+    }
+    | MIN LBRACE expression RBRACE {
+      $$ = create_aggregate_expression("min", $3, sql_string, &@$);
+    }
     ;
 
 rel_attr:

@@ -523,9 +523,9 @@ UnboundAggregateExpr::UnboundAggregateExpr(const char *aggregate_name, Expressio
 {}
 
 ////////////////////////////////////////////////////////////////////////////////
-AggregateExpr::AggregateExpr(Type type, Expression *child) : aggregate_type_(type), child_(child) {}
+AggregateExpr::AggregateExpr(AggregateFunctionType type, Expression *child) : aggregate_type_(type), child_(child) {}
 
-AggregateExpr::AggregateExpr(Type type, unique_ptr<Expression> child) : aggregate_type_(type), child_(std::move(child))
+AggregateExpr::AggregateExpr(AggregateFunctionType type, unique_ptr<Expression> child) : aggregate_type_(type), child_(std::move(child))
 {}
 
 RC AggregateExpr::get_column(Chunk &chunk, Column &column)
@@ -555,8 +555,24 @@ unique_ptr<Aggregator> AggregateExpr::create_aggregator() const
 {
   unique_ptr<Aggregator> aggregator;
   switch (aggregate_type_) {
-    case Type::SUM: {
+    case AggregateFunctionType::AGG_SUM: {
       aggregator = make_unique<SumAggregator>();
+      break;
+    }
+    case AggregateFunctionType::AGG_COUNT: {
+      aggregator = make_unique<CountAggregator>();
+      break;
+    }
+    case AggregateFunctionType::AGG_AVG: {
+      aggregator = make_unique<AvgAggregator>();
+      break;
+    }
+    case AggregateFunctionType::AGG_MAX: {
+      aggregator = make_unique<MaxAggregator>();
+      break;
+    }
+    case AggregateFunctionType::AGG_MIN: {
+      aggregator = make_unique<MinAggregator>();
       break;
     }
     default: {
@@ -572,19 +588,19 @@ RC AggregateExpr::get_value(const Tuple &tuple, Value &value) const
   return tuple.find_cell(TupleCellSpec(name()), value);
 }
 
-RC AggregateExpr::type_from_string(const char *type_str, AggregateExpr::Type &type)
+RC AggregateExpr::type_from_string(const char *type_str, AggregateFunctionType &type)
 {
   RC rc = RC::SUCCESS;
   if (0 == strcasecmp(type_str, "count")) {
-    type = Type::COUNT;
+    type = AggregateFunctionType::AGG_COUNT;
   } else if (0 == strcasecmp(type_str, "sum")) {
-    type = Type::SUM;
+    type = AggregateFunctionType::AGG_SUM;
   } else if (0 == strcasecmp(type_str, "avg")) {
-    type = Type::AVG;
+    type = AggregateFunctionType::AGG_AVG;
   } else if (0 == strcasecmp(type_str, "max")) {
-    type = Type::MAX;
+    type = AggregateFunctionType::AGG_MAX;
   } else if (0 == strcasecmp(type_str, "min")) {
-    type = Type::MIN;
+    type = AggregateFunctionType::AGG_MIN;
   } else {
     rc = RC::INVALID_ARGUMENT;
   }

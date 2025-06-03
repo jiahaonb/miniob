@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/field/field.h"
 #include "sql/expr/aggregator.h"
 #include "storage/common/chunk.h"
+#include "sql/builtin/builtin.h"
 
 class Tuple;
 
@@ -427,18 +428,8 @@ private:
 class AggregateExpr : public Expression
 {
 public:
-  enum class Type
-  {
-    COUNT,
-    SUM,
-    AVG,
-    MAX,
-    MIN,
-  };
-
-public:
-  AggregateExpr(Type type, Expression *child);
-  AggregateExpr(Type type, unique_ptr<Expression> child);
+  AggregateExpr(AggregateFunctionType type, Expression *child);
+  AggregateExpr(AggregateFunctionType type, unique_ptr<Expression> child);
   virtual ~AggregateExpr() = default;
 
   bool equal(const Expression &other) const override;
@@ -452,7 +443,7 @@ public:
 
   RC get_column(Chunk &chunk, Column &column) override;
 
-  Type aggregate_type() const { return aggregate_type_; }
+  AggregateFunctionType aggregate_type() const { return aggregate_type_; }
 
   unique_ptr<Expression> &child() { return child_; }
 
@@ -461,9 +452,9 @@ public:
   unique_ptr<Aggregator> create_aggregator() const;
 
 public:
-  static RC type_from_string(const char *type_str, Type &type);
+  static RC type_from_string(const char *type_str, AggregateFunctionType &type);
 
 private:
-  Type                   aggregate_type_;
+  AggregateFunctionType  aggregate_type_;
   unique_ptr<Expression> child_;
 };

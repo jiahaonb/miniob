@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/math/simd_util.h"
 #include "common/sys/rc.h"
 #include "sql/expr/expression.h"
+#include "sql/builtin/builtin.h"
 
 /**
  * @brief 用于hash group by 的哈希表实现，不支持并发访问。
@@ -96,8 +97,8 @@ public:
 
 private:
   /// group by values -> aggregate values
-  StandardHashTable           aggr_values_;
-  vector<AggregateExpr::Type> aggr_types_;
+  StandardHashTable                aggr_values_;
+  vector<AggregateFunctionType>    aggr_types_;
 };
 
 /**
@@ -128,7 +129,7 @@ public:
     int scan_count_ = 0;
   };
 
-  LinearProbingAggregateHashTable(AggregateExpr::Type aggregate_type, int capacity = DEFAULT_CAPACITY)
+  LinearProbingAggregateHashTable(AggregateFunctionType aggregate_type, int capacity = DEFAULT_CAPACITY)
       : keys_(capacity, EMPTY_KEY), values_(capacity, 0), capacity_(capacity), aggregate_type_(aggregate_type)
   {}
   virtual ~LinearProbingAggregateHashTable() {}
@@ -162,10 +163,10 @@ private:
   static const int EMPTY_KEY;
   static const int DEFAULT_CAPACITY;
 
-  vector<int>         keys_;
-  vector<V>           values_;
-  int                 size_     = 0;
-  int                 capacity_ = 0;
-  AggregateExpr::Type aggregate_type_;
+  vector<int>              keys_;
+  vector<V>                values_;
+  int                      size_     = 0;
+  int                      capacity_ = 0;
+  AggregateFunctionType    aggregate_type_;
 };
 #endif  // USE_SIMD
