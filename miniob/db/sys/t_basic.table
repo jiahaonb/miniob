@@ -50,9 +50,24 @@
 			],
 			"name" : "i_id",
 			"unique" : false
+		},
+		{
+			"fields" : 
+			[
+				{
+					"FIELD_id" : 0,
+					"len" : 4,
+					"name" : "id",
+					"offset" : 0,
+					"type" : "ints",
+					"visible" : true
+				}
+			],
+			"name" : "i_unique_id",
+			"unique" : true
 		}
 	],
 	"storage_format" : 1,
-	"table_id" : 3,
+	"table_id" : 4,
 	"table_name" : "t_basic"
 }
