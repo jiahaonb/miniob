@@ -66,25 +66,16 @@ RC UpdatePhysicalOperator::open(Trx* trx)
         }
         new_record.set_rid(old_record_from_vec.rid());
 
-        const char* update_value_ptr = this->value_.data();
-        int update_value_len = this->value_.length();
-
-        if (update_value_ptr == nullptr && update_value_len > 0) {
-            LOG_WARN("Value data is nullptr but length is %d for type %s", 
-                     update_value_len, attr_type_to_string(this->value_.attr_type()));
-            return RC::INVALID_ARGUMENT; 
-        }
-        
-        if (this->value_offset_ + update_value_len > new_record.len()) {
-            LOG_WARN("Update value offset (%d) + length (%d) exceeds record length (%d)",
-                     this->value_offset_, update_value_len, new_record.len());
-            return RC::INVALID_ARGUMENT;
+        // 检查值长度是否超过字段长度
+        if (this->value_.length() > this->field_len_) {
+            LOG_WARN("Value length (%d) exceeds field length (%d), will be truncated",
+                     this->value_.length(), this->field_len_);
         }
 
-        RC set_rc = new_record.set_field(this->value_offset_, update_value_len, const_cast<char*>(update_value_ptr));
+        RC set_rc = new_record.set_field(this->value_offset_, this->field_len_, this->value_);
         if (set_rc != RC::SUCCESS) {
              LOG_WARN("failed to set field in new_record: %s, offset: %d, len: %d",
-                      strrc(set_rc), this->value_offset_, update_value_len);
+                      strrc(set_rc), this->value_offset_, this->field_len_);
              return set_rc;
         }
 

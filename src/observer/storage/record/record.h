@@ -26,6 +26,7 @@ See the Mulan PSL v2 for more details. */
 #include "storage/index/index_meta.h"
 
 class Field;
+class Value;
 
 /**
  * @brief 标识一个记录的位置
@@ -72,7 +73,7 @@ struct RID
   }
 
   /**
-   * @brief 返回一个“最大的”RID
+   * @brief 返回一个"最大的"RID
    * 我们假设page num和slot num都不会使用对应数值类型的最大值
    */
   static RID *max()
@@ -225,6 +226,8 @@ public:
     memcpy(data_ + field_offset, data, field_len);
     return RC::SUCCESS;
   }
+
+  RC set_field(int field_offset, int field_len, const Value &value);
 
   char       *data() { return this->data_; }
   const char *data() const { return this->data_; }

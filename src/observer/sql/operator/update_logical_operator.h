@@ -9,7 +9,7 @@
 class UpdateLogicalOperator : public LogicalOperator 
 {
 public:
-  UpdateLogicalOperator(Table *table, const Value& value, int value_offset);
+  UpdateLogicalOperator(Table *table, const Value& value, int value_offset, int field_len);
   virtual ~UpdateLogicalOperator() = default;
 
   LogicalOperatorType type() const override
@@ -28,9 +28,14 @@ public:
   {
     return value_offset_;
   }
+  int field_len() const
+  {
+    return field_len_;
+  }
 
 private:
   Table *table_ = nullptr;
   const Value& value_;
   int value_offset_ = 0;
+  int field_len_ = 0;
 };

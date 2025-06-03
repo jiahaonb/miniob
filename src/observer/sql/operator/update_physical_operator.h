@@ -27,8 +27,8 @@ class Trx;
 class UpdatePhysicalOperator : public PhysicalOperator
 {
 public:
-  UpdatePhysicalOperator(Table *table, const Value& value, int value_offset)
-      : table_(table), value_(value), value_offset_(value_offset)
+  UpdatePhysicalOperator(Table *table, const Value& value, int value_offset, int field_len)
+      : table_(table), value_(value), value_offset_(value_offset), field_len_(field_len)
   {}
 
   virtual ~UpdatePhysicalOperator() = default;
@@ -45,6 +45,7 @@ private:
   Table *table_ = nullptr;
   Value value_;
   int value_offset_;
+  int field_len_;
   Trx *trx_ = nullptr;
   vector<Record> records_; ///< 需要更新的记录集合
 }; 

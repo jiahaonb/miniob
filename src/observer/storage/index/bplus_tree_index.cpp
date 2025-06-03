@@ -94,6 +94,21 @@ RC BplusTreeIndex::close()
 RC BplusTreeIndex::insert_entry(const char *record, const RID *rid)
 {
   char *entry = index_meta_.make_entry_from_record(record);
+  
+  // 检查唯一性约束
+  if (index_meta_.unique()) {
+    list<RID> entries;
+    RC rc = index_handler_.get_entry(entry, index_meta_.fields_total_len(), entries);
+    if (OB_FAIL(rc)) {
+      delete[] entry;
+      return rc;
+    }
+    if (!entries.empty()) {
+      delete[] entry;
+      return RC::RECORD_DUPLICATE_KEY;
+    }
+  }
+  
   RC rc = index_handler_.insert_entry(entry, rid);
   delete[] entry;
   return rc;

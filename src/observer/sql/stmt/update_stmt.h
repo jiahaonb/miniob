@@ -27,7 +27,7 @@ class UpdateStmt : public Stmt
 {
 public:
   UpdateStmt() = default;
-  UpdateStmt(Table *table,const Value &value, int value_offset, FilterStmt* filter_stmt);
+  UpdateStmt(Table *table,const Value &value, int value_offset, int field_len, FilterStmt* filter_stmt);
   StmtType type() const override 
   {
     return StmtType::UPDATE;
@@ -48,6 +48,10 @@ public:
   {
     return value_offset_;
   }
+  int field_len() const
+  {
+    return field_len_;
+  }
   FilterStmt* filter_stmt() const 
   {
     return filter_stmt_;
@@ -57,5 +61,6 @@ private:
   Table *table_ = nullptr;
   const Value& value_;
   int value_offset_ = 0; //后面修改Record要用，但是多个Record别的字段可能不同，所以只能延迟修改, 这里做了一点改动
+  int field_len_ = 0;    // 字段长度
   FilterStmt* filter_stmt_ = nullptr;
 };
