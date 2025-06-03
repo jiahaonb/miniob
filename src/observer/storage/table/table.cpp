@@ -487,6 +487,44 @@ RC Table::delete_record(const Record &record)
   return rc;
 }
 
+RC Table::update_record(const Record &old_record, const Record &new_record)
+{
+  RC rc = RC::SUCCESS;
+  // 维护索引，先删除后插入
+  for (Index *index : indexes_) {
+    rc = index->delete_entry(old_record.data(), &old_record.rid());
+    ASSERT(RC::SUCCESS == rc,
+           "failed to delete entry from index. table name=%s, index name=%s, rid=%s, rc=%s",
+           name(), index->index_meta().name(), old_record.rid().to_string().c_str(), strrc(rc));
+  }
+
+  // 尝试插入新记录的索引项
+  rc = insert_entry_of_indexes(new_record.data(), new_record.rid());
+  // 出现重复键等错误
+  if (rc != RC::SUCCESS) {
+    // 回滚：重新插入旧记录的索引项
+    RC rollback_rc = insert_entry_of_indexes(old_record.data(), old_record.rid());
+    if (rollback_rc != RC::SUCCESS) {
+      LOG_ERROR("Failed to rollback index entries during update. table name=%s, rc=%s", 
+                name(), strrc(rollback_rc));
+    }
+    return rc;
+  }
+
+  // 最后更新记录数据
+  rc = record_handler_->update_record(new_record.data(), &new_record.rid());
+  if (rc != RC::SUCCESS) {
+    // 回滚索引更改
+    RC rollback_rc1 = delete_entry_of_indexes(new_record.data(), new_record.rid(), false);
+    RC rollback_rc2 = insert_entry_of_indexes(old_record.data(), old_record.rid());
+    if (rollback_rc1 != RC::SUCCESS || rollback_rc2 != RC::SUCCESS) {
+      LOG_ERROR("Failed to rollback index entries after record update failed. table name=%s", name());
+    }
+  }
+  
+  return rc;
+}
+
 RC Table::insert_entry_of_indexes(const char *record, const RID &rid)
 {
   RC rc = RC::SUCCESS;

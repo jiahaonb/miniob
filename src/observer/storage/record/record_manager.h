@@ -1,4 +1,3 @@
-
 /* Copyright (c) 2021 Xie Meiyi(xiemeiyi@hust.edu.cn) and OceanBase and/or its affiliates. All rights reserved.
 miniob is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -387,6 +386,14 @@ public:
    * @param rid         返回该记录的标识符
    */
   RC insert_record(const char *data, int record_size, RID *rid);
+
+  /**
+   * @brief 更新指定记录的数据
+   *
+   * @param data        新的记录内容
+   * @param rid         要更新记录的标识符
+   */
+  RC update_record(const char *data, const RID *rid);
 
   /**
    * @brief 数据库恢复时，在指定文件指定位置插入数据
