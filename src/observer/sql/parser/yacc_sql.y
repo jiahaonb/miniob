@@ -1,4 +1,3 @@
-
 %{
 
 #include <stdio.h>
@@ -75,9 +74,10 @@ ParsedSqlNode *create_table_sql_node(char *table_name,
         free(storage_format);
     }
 
-    if (create_table_select) {
-        create_table.create_table_select = std::make_unique<SelectSqlNode>(std::move(create_table_select->selection));
-    }
+    // 屏蔽 create-table-select 功能
+    // if (create_table_select) {
+    //     create_table.create_table_select = std::make_unique<SelectSqlNode>(std::move(create_table_select->selection));
+    // }
 
     return parsed_sql_node;
 }
@@ -807,7 +807,7 @@ set_clause:
     ;
 
 select_stmt:
-    SELECT expression_list FROM rel_list where group_by opt_having opt_order_by opt_limit
+    SELECT expression_list FROM rel_list where opt_limit
     {
       $$ = new ParsedSqlNode(SCF_SELECT);
       if ($2 != nullptr) {
@@ -827,25 +827,11 @@ select_stmt:
       }
 
       if ($6 != nullptr) {
-        $$->selection.group_by.swap(*$6);
+        $$->selection.limit = std::make_unique<LimitSqlNode>(*$6);
         delete $6;
       }
-
-      if ($7 != nullptr) {
-        $$->selection.having_conditions = std::unique_ptr<Expression>($7);
-      }
-
-      if ($8 != nullptr) {
-        $$->selection.order_by.swap(*$8);
-        delete $8;
-      }
-
-      if ($9 != nullptr) {
-        $$->selection.limit = std::make_unique<LimitSqlNode>(*$9);
-        delete $9;
-      }
     }
-    | SELECT expression_list FROM relation INNER JOIN join_clauses where group_by
+    | SELECT expression_list FROM relation INNER JOIN join_clauses where
     {
       $$ = new ParsedSqlNode(SCF_SELECT);
       if ($2 != nullptr) {
@@ -868,11 +854,6 @@ select_stmt:
       if ($8 != nullptr) {
         auto ptr = $$->selection.conditions.release();
         $$->selection.conditions = std::make_unique<ConjunctionExpr>(ConjunctionExpr::Type::AND, ptr, $8);
-      }
-
-      if ($9 != nullptr) {
-        $$->selection.group_by.swap(*$9);
-        delete $9;
       }
     }
     ;

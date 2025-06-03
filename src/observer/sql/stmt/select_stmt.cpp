@@ -97,6 +97,8 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt,
     }
   }
 
+  // 屏蔽 GROUP BY 功能
+  /*
   vector<unique_ptr<Expression>> group_by_expressions;
   for (unique_ptr<Expression> &expression : select_sql.group_by) {
     RC rc = expression_binder.bind_expression(expression, group_by_expressions);
@@ -105,7 +107,10 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt,
       return rc;
     }
   }
+  */
 
+  // 屏蔽 ORDER BY 功能
+  /*
   vector<unique_ptr<Expression>> order_by_expressions;
   for (OrderBySqlNode &unit : select_sql.order_by) {
     RC rc = expression_binder.bind_expression(unit.expr, order_by_expressions);
@@ -120,6 +125,7 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt,
   for (size_t i = 0; i < order_by_expressions.size(); i++) {
     order_by_.push_back({std::move(order_by_expressions[i]), select_sql.order_by[i].is_asc});
   }
+  */
 
   int limit = -1;
   if (select_sql.limit) {
@@ -134,6 +140,8 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt,
     return rc;
   }
 
+  // 屏蔽 HAVING 功能
+  /*
   // create filter statement in `having` statement
   FilterStmt *having_filter_stmt = nullptr;
   rc                             = FilterStmt::create(
@@ -142,6 +150,7 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt,
     LOG_WARN("cannot construct having filter stmt");
     return rc;
   }
+  */
 
   // everything alright
   SelectStmt *select_stmt = new SelectStmt();
@@ -150,10 +159,11 @@ RC SelectStmt::create(Db *db, SelectSqlNode &select_sql, Stmt *&stmt,
   select_stmt->tables_alias_ = std::move(tables_alias);
   select_stmt->query_expressions_.swap(bound_expressions);
   select_stmt->filter_stmt_ = filter_stmt;
-  select_stmt->group_by_.swap(group_by_expressions);
-  select_stmt->order_by_.swap(order_by_);
+  // select_stmt->group_by_.swap(group_by_expressions);  // 屏蔽group by
+  // select_stmt->order_by_.swap(order_by_);  // 屏蔽order by
   select_stmt->limit_              = limit;
-  select_stmt->having_filter_stmt_ = having_filter_stmt;
+  // select_stmt->having_filter_stmt_ = having_filter_stmt;  // 屏蔽having
+  select_stmt->having_filter_stmt_ = nullptr;  // 设为null
   stmt                             = select_stmt;
   return RC::SUCCESS;
 }

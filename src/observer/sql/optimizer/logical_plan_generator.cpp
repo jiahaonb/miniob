@@ -135,6 +135,8 @@ RC LogicalPlanGenerator::create_plan(SelectStmt *select_stmt, unique_ptr<Logical
     last_oper = &predicate_oper;
   }
 
+  // 屏蔽 GROUP BY 功能
+  /*
   unique_ptr<LogicalOperator> group_by_oper;
   rc = create_group_by_plan(select_stmt, group_by_oper);
   if (OB_FAIL(rc)) {
@@ -149,7 +151,10 @@ RC LogicalPlanGenerator::create_plan(SelectStmt *select_stmt, unique_ptr<Logical
 
     last_oper = &group_by_oper;
   }
+  */
 
+  // 屏蔽 HAVING 功能
+  /*
   unique_ptr<LogicalOperator> having_predicate_oper;
 
   rc = create_plan(select_stmt->having_filter_stmt(), having_predicate_oper);
@@ -164,7 +169,10 @@ RC LogicalPlanGenerator::create_plan(SelectStmt *select_stmt, unique_ptr<Logical
     }
     last_oper = &having_predicate_oper;
   }
+  */
 
+  // 屏蔽 ORDER BY 功能
+  /*
   if (!select_stmt->order_by().empty()) {
     unique_ptr<LogicalOperator> orderby_oper;
     rc = create_order_by_plan(select_stmt, orderby_oper);
@@ -179,6 +187,7 @@ RC LogicalPlanGenerator::create_plan(SelectStmt *select_stmt, unique_ptr<Logical
       *last_oper = std::move(orderby_oper);
     }
   }
+  */
 
   if (select_stmt->limit() != -1) {
     unique_ptr<LimitLogicalOperator> limit_oper = std::make_unique<LimitLogicalOperator>(select_stmt->limit());
