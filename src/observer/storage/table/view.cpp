@@ -79,10 +79,12 @@ RC View::create(Db *db, int32_t table_id, const char *path, const char *name, co
     return RC::INVALID_ARGUMENT;
   }
 
+  /*
   // 包含 groupby 和 having 的是只读视图
   if (!select_stmt->group_by().empty() || select_stmt->having_filter_stmt()) {
     is_mutable = false;
   }
+  */
 
   // 使用 table_name.table 记录一个表的元数据
   // 判断表文件是否已经存在

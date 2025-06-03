@@ -1,4 +1,3 @@
-
 %{
 
 #include <stdio.h>
@@ -257,8 +256,6 @@ ParsedSqlNode *create_table_sql_node(char *table_name,
 %type <sql_node>            create_index_stmt
 %type <sql_node>            drop_index_stmt
 %type <sql_node>            show_index_stmt
-%type <sql_node>            create_view_stmt
-%type <sql_node>            drop_view_stmt
 %type <sql_node>            sync_stmt
 %type <sql_node>            begin_stmt
 %type <sql_node>            commit_stmt
@@ -299,8 +296,6 @@ command_wrapper:
   | create_index_stmt
   | drop_index_stmt
   | show_index_stmt
-  | create_view_stmt
-  | drop_view_stmt
   | sync_stmt
   | begin_stmt
   | commit_stmt
@@ -471,54 +466,9 @@ drop_index_stmt:      /*drop index 语句的语法解析树*/
     }
     ;
 create_table_stmt:    /*create table 语句的语法解析树*/
-    CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE storage_format AS select_stmt
-    {
-        $$ = create_table_sql_node($3, $5, $6, $8, $10);
-    }
-    | CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE storage_format select_stmt
-    {
-        $$ = create_table_sql_node($3, $5, $6, $8, $9);
-    }
-    | CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE storage_format
+    CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE storage_format
     {
         $$ = create_table_sql_node($3, $5, $6, $8, nullptr);
-    }
-    | CREATE TABLE ID storage_format AS select_stmt
-    {
-        $$ = create_table_sql_node($3, nullptr, nullptr, $4, $6);
-    }
-    | CREATE TABLE ID storage_format select_stmt
-    {
-      $$ = create_table_sql_node($3, nullptr, nullptr, $4, $5);
-    }
-    ;
-
-create_view_stmt:
-      CREATE VIEW ID AS select_stmt
-    {
-      $$ = new ParsedSqlNode(SCF_CREATE_VIEW);
-      CreateViewSqlNode &create_view = $$->create_view;
-      create_view.relation_name = $3;
-      create_view.create_view_select = std::make_unique<SelectSqlNode>(std::move($5->selection));
-      free($3);
-    }
-    | CREATE VIEW ID LBRACE attr_list RBRACE AS select_stmt
-    {
-      $$ = new ParsedSqlNode(SCF_CREATE_VIEW);
-      CreateViewSqlNode &create_view = $$->create_view;
-      create_view.relation_name = $3;
-      create_view.attribute_names = std::move(*$5);
-      create_view.create_view_select = std::make_unique<SelectSqlNode>(std::move($8->selection));
-      free($3);
-    }
-    ;
-
-drop_view_stmt:
-      DROP VIEW ID
-    {
-      $$ = new ParsedSqlNode(SCF_DROP_VIEW);
-      $$->drop_view.relation_name = $3;
-      free($3);
     }
     ;
 
@@ -807,7 +757,7 @@ set_clause:
     ;
 
 select_stmt:
-    SELECT expression_list FROM rel_list where group_by opt_having opt_order_by opt_limit
+    SELECT expression_list FROM rel_list where /*group_by opt_having opt_order_by opt_limit*/
     {
       $$ = new ParsedSqlNode(SCF_SELECT);
       if ($2 != nullptr) {
@@ -826,6 +776,7 @@ select_stmt:
         $$->selection.conditions = std::unique_ptr<Expression>($5);
       }
 
+      /*
       if ($6 != nullptr) {
         $$->selection.group_by.swap(*$6);
         delete $6;
@@ -844,8 +795,9 @@ select_stmt:
         $$->selection.limit = std::make_unique<LimitSqlNode>(*$9);
         delete $9;
       }
+      */
     }
-    | SELECT expression_list FROM relation INNER JOIN join_clauses where group_by
+    | SELECT expression_list FROM relation INNER JOIN join_clauses where /*group_by*/
     {
       $$ = new ParsedSqlNode(SCF_SELECT);
       if ($2 != nullptr) {
@@ -870,10 +822,12 @@ select_stmt:
         $$->selection.conditions = std::make_unique<ConjunctionExpr>(ConjunctionExpr::Type::AND, ptr, $8);
       }
 
+      /*
       if ($9 != nullptr) {
         $$->selection.group_by.swap(*$9);
         delete $9;
       }
+      */
     }
     ;
 
@@ -896,27 +850,31 @@ expression_list:
     /* empty */ {
       $$ = new std::vector<std::unique_ptr<Expression>>;
     }
-    | expression alias
+    | expression /*alias*/
     {
       $$ = new std::vector<std::unique_ptr<Expression>>;
+      /*
       if (nullptr != $2) {
         $1->set_alias($2);
       }
+      */
       $$->emplace_back($1);
-      free($2);
+      /*free($2);*/
     }
-    | expression alias COMMA expression_list
+    | expression /*alias*/ COMMA expression_list
     {
-      if ($4 != nullptr) {
-        $$ = $4;
+      if ($3 != nullptr) {
+        $$ = $3;
       } else {
         $$ = new std::vector<std::unique_ptr<Expression>>;
       }
+      /*
       if (nullptr != $2) {
         $1->set_alias($2);
       }
+      */
       $$->emplace($$->begin(),std::move($1));
-      free($2);
+      /*free($2);*/
     }
     ;
 
@@ -1018,28 +976,34 @@ relation:
     ;
 
 rel_list:
-    relation alias {
+    relation /*alias*/ {
       $$ = new std::vector<RelationNode>();
+      /*
       if(nullptr!=$2){
         $$->emplace_back($1,$2);
         free($2);
       }else{
         $$->emplace_back($1);
       }
+      */
+      $$->emplace_back($1);
       free($1);
     }
-    | relation alias COMMA rel_list {
-      if ($4 != nullptr) {
-        $$ = $4;
+    | relation /*alias*/ COMMA rel_list {
+      if ($3 != nullptr) {
+        $$ = $3;
       } else {
         $$ = new std::vector<RelationNode>;
       }
+      /*
       if(nullptr!=$2){
         $$->insert($$->begin(), RelationNode($1,$2));
         free($2);
       }else{
         $$->insert($$->begin(), RelationNode($1));
       }
+      */
+      $$->insert($$->begin(), RelationNode($1));
       free($1);
     }
     ;

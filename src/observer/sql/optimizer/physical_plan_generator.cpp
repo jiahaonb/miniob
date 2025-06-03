@@ -96,6 +96,7 @@ RC PhysicalPlanGenerator::create(LogicalOperator &logical_operator, unique_ptr<P
       return create_plan(static_cast<JoinLogicalOperator &>(logical_operator), oper);
     } break;
 
+    /*
     case LogicalOperatorType::GROUP_BY: {
       return create_plan(static_cast<GroupByLogicalOperator &>(logical_operator), oper);
     } break;
@@ -107,6 +108,7 @@ RC PhysicalPlanGenerator::create(LogicalOperator &logical_operator, unique_ptr<P
     case LogicalOperatorType::LIMIT: {
       return create_plan(static_cast<LimitLogicalOperator &>(logical_operator), oper);
     } break;
+    */
 
     default: {
       ASSERT(false, "unknown logical operator type");
@@ -127,9 +129,11 @@ RC PhysicalPlanGenerator::create_vec(LogicalOperator &logical_operator, unique_p
     case LogicalOperatorType::PROJECTION: {
       return create_vec_plan(static_cast<ProjectLogicalOperator &>(logical_operator), oper);
     } break;
+    /*
     case LogicalOperatorType::GROUP_BY: {
       return create_vec_plan(static_cast<GroupByLogicalOperator &>(logical_operator), oper);
     } break;
+    */
     case LogicalOperatorType::EXPLAIN: {
       return create_vec_plan(static_cast<ExplainLogicalOperator &>(logical_operator), oper);
     } break;
@@ -412,6 +416,7 @@ RC PhysicalPlanGenerator::create_plan(CalcLogicalOperator &logical_oper, std::un
   return rc;
 }
 
+/*
 RC PhysicalPlanGenerator::create_plan(GroupByLogicalOperator &logical_oper, std::unique_ptr<PhysicalOperator> &oper)
 {
   RC rc = RC::SUCCESS;
@@ -486,6 +491,7 @@ RC PhysicalPlanGenerator::create_plan(LimitLogicalOperator &logical_oper, unique
   oper = unique_ptr<PhysicalOperator>(limit_oper);
   return rc;
 }
+*/
 
 RC PhysicalPlanGenerator::create_vec_plan(TableGetLogicalOperator &table_get_oper, unique_ptr<PhysicalOperator> &oper)
 {
@@ -504,6 +510,7 @@ RC PhysicalPlanGenerator::create_vec_plan(TableGetLogicalOperator &table_get_ope
   return RC::SUCCESS;
 }
 
+/*
 RC PhysicalPlanGenerator::create_vec_plan(GroupByLogicalOperator &logical_oper, unique_ptr<PhysicalOperator> &oper)
 {
   RC                           rc            = RC::SUCCESS;
@@ -530,6 +537,7 @@ RC PhysicalPlanGenerator::create_vec_plan(GroupByLogicalOperator &logical_oper, 
   oper = std::move(physical_oper);
   return rc;
 }
+*/
 
 RC PhysicalPlanGenerator::create_vec_plan(ProjectLogicalOperator &project_oper, unique_ptr<PhysicalOperator> &oper)
 {
