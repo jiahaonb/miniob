@@ -28,6 +28,7 @@ class Value;
  * @brief 描述一个索引
  * @ingroup Index
  * @details 一个索引包含了表的哪些字段，索引的名称等。
+ * 支持在多个字段上创建索引，支持unique索引。
  * 如果以后实现了多种类型的索引，还需要记录索引的类型，对应类型的一些元数据等
  */
 class IndexMeta
@@ -35,11 +36,17 @@ class IndexMeta
 public:
   IndexMeta() = default;
 
-  RC init(const char *name, const FieldMeta &field);
+  RC init(const char *name, const vector<FieldMeta> &fields, bool unique = false);
 
 public:
-  const char *name() const;
-  const char *field() const;
+  const char               *name() const;
+  const vector<FieldMeta>  &fields() const;
+  bool                      unique() const;
+  int                       fields_total_len() const;
+  const vector<int>        &fields_offset() const;
+
+  char *make_entry_from_record(const char *record);
+  void  make_entry_from_record(char *entry, const char *record);
 
   void desc(ostream &os) const;
 
@@ -48,6 +55,9 @@ public:
   static RC from_json(const TableMeta &table, const Json::Value &json_value, IndexMeta &index);
 
 protected:
-  string name_;   // index's name
-  string field_;  // field's name
+  string            name_;              // index's name
+  vector<FieldMeta> fields_;            // field metas
+  bool              unique_;            // whether the index is unique
+  int               fields_total_len_;  // total length of all fields
+  vector<int>       fields_offset_;    // offset of each field in the composite key
 };

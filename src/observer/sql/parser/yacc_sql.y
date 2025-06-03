@@ -97,6 +97,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         EXPLAIN
         STORAGE
         FORMAT
+        UNIQUE
         EQ
         LT
         GT
@@ -173,6 +174,8 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <sql_node>            command_wrapper
 // commands should be a list but I use a single command instead
 %type <sql_node>            commands
+%type <number>              opt_unique
+%type <relation_list>       attr_list
 
 %left '+' '-'
 %left '*' '/'
@@ -264,13 +267,17 @@ desc_table_stmt:
     ;
 
 create_index_stmt:    /*create index 语句的语法解析树*/
-    CREATE INDEX ID ON ID LBRACE ID RBRACE
+    CREATE opt_unique INDEX ID ON ID LBRACE attr_list RBRACE
     {
       $$ = new ParsedSqlNode(SCF_CREATE_INDEX);
       CreateIndexSqlNode &create_index = $$->create_index;
-      create_index.index_name = $3;
-      create_index.relation_name = $5;
-      create_index.attribute_name = $7;
+      create_index.unique = $2;
+      create_index.index_name = $4;
+      create_index.relation_name = $6;
+      if ($8 != nullptr) {
+        create_index.attribute_names.swap(*$8);
+        delete $8;
+      }
     }
     ;
 
@@ -282,6 +289,25 @@ drop_index_stmt:      /*drop index 语句的语法解析树*/
       $$->drop_index.relation_name = $5;
     }
     ;
+
+opt_unique:
+    UNIQUE { $$ = 1; }
+    | /* 空 */ { $$ = 0; }
+    ;
+
+attr_list:
+    ID
+    {
+      $$ = new vector<string>; 
+      $$->emplace_back($1);
+    }
+    | ID COMMA attr_list
+    {
+      $$ = $3;
+      $$->emplace($3->begin(), $1);
+    }
+    ;
+
 create_table_stmt:    /*create table 语句的语法解析树*/
     CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE storage_format
     {

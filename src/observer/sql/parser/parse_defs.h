@@ -174,13 +174,14 @@ struct DropTableSqlNode
  * @brief 描述一个create index语句
  * @ingroup SQLParser
  * @details 创建索引时，需要指定索引名，表名，字段名。
- * 正常的SQL语句中，一个索引可能包含了多个字段，这里仅支持一个字段。
+ * 支持在多个字段上创建索引，支持unique索引。
  */
 struct CreateIndexSqlNode
 {
-  string index_name;      ///< Index name
-  string relation_name;   ///< Relation name
-  string attribute_name;  ///< Attribute name
+  bool           unique;           ///< 是否为unique索引
+  string         index_name;       ///< Index name
+  string         relation_name;    ///< Relation name
+  vector<string> attribute_names;  ///< Attribute names
 };
 
 /**
