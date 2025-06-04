@@ -2047,3 +2047,25 @@ Finish dump configuration
 [2025-06-04 11:28:36.540241 pid:23900 tid:7015f09736c0 ctx:0 INFO: read_event@plain_communicator.cpp:89] >> receive command(size=13): show tables
 
 [2025-06-04 11:28:36.540725 pid:23900 tid:7015f09736c0 ctx:50300001f840 INFO: handle_event@sql_task_handler.cpp:46] >> write result return SUCCESS
+[2025-06-04 11:29:48.310273 pid:23900 tid:7015f09736c0 ctx:0 INFO: read_event@plain_communicator.cpp:89] >> receive command(size=22): select * from jiahao
+
+[2025-06-04 11:29:48.310685 pid:23900 tid:7015f09736c0 ctx:50300001f840 INFO: handle_event@sql_task_handler.cpp:46] >> write result return SUCCESS
+[2025-06-04 11:30:19.575783 pid:23900 tid:7015f09736c0 ctx:0 INFO: read_event@plain_communicator.cpp:82] >> The peer has been closed 127.0.0.1:36584
+[2025-06-04 11:30:19.575950 pid:23900 tid:7015f09736c0 ctx:0 ERROR: operator()@one_thread_per_connection_thread_handler.cpp:96] >> handle error. rc = IOERR_CLOSE
+[2025-06-04 11:30:19.576017 pid:23900 tid:7015f09736c0 ctx:0 INFO: operator()@one_thread_per_connection_thread_handler.cpp:101] >> worker thread stop. communicator = 0x518000000080
+[2025-06-04 11:30:19.576388 pid:23900 tid:7015f09736c0 ctx:0 INFO: close_connection@one_thread_per_connection_thread_handler.cpp:152] >> close connection. communicator = 0x518000000080
+[2025-06-04 11:30:21.596592 pid:23900 tid:7016089497c0 ctx:0 WARN: serve@server.cpp:273] >> [listen socket] poll error. fd = 5, ret = -1, error=Interrupted system call
+[2025-06-04 11:30:21.596658 pid:23900 tid:7016089497c0 ctx:0 INFO: await_stop@one_thread_per_connection_thread_handler.cpp:168] >> begin to await stop one thread per connection thread handler
+[2025-06-04 11:30:21.596671 pid:23900 tid:7016089497c0 ctx:0 INFO: await_stop@one_thread_per_connection_thread_handler.cpp:172] >> end to await stop one thread per connection thread handler
+[2025-06-04 11:30:21.596686 pid:23900 tid:7016089497c0 ctx:0 INFO: await_stop@one_thread_per_connection_thread_handler.cpp:168] >> begin to await stop one thread per connection thread handler
+[2025-06-04 11:30:21.596693 pid:23900 tid:7016089497c0 ctx:0 INFO: await_stop@one_thread_per_connection_thread_handler.cpp:172] >> end to await stop one thread per connection thread handler
+[2025-06-04 11:30:21.596717 pid:23900 tid:7016089497c0 ctx:0 INFO: serve@server.cpp:295] >> NetServer quit
+[2025-06-04 11:30:21.596728 pid:23900 tid:7016089497c0 ctx:0 INFO: main@main.cpp:200] >> Server stopped
+[2025-06-04 11:30:21.596727 pid:23900 tid:7015f09736c0 ctx:0 INFO: quit_thread_func@main.cpp:153] >> Receive signal: 2
+[2025-06-04 11:30:21.596784 pid:23900 tid:7015f09736c0 ctx:0 INFO: shutdown@server.cpp:301] >> NetServer shutting down
+[2025-06-04 11:30:21.611165 pid:23900 tid:7016089497c0 ctx:0 INFO: sync@db.cpp:354] >> double write buffer flush pages ret=SUCCESS
+[2025-06-04 11:30:21.611431 pid:23900 tid:7016089497c0 ctx:0 INFO: flush_meta@db.cpp:487] >> Successfully write db meta file. db=sys, file=miniob/db/sys/sys.db.tmp, check_point_lsn=0
+[2025-06-04 11:30:21.611456 pid:23900 tid:7016089497c0 ctx:0 INFO: sync@db.cpp:373] >> Successfully sync db. db=sys
+[2025-06-04 11:30:21.611471 pid:23900 tid:7016089497c0 ctx:0 INFO: ~Db@db.cpp:49] >> Db has been closed: sys
+[2025-06-04 11:30:21.634410 pid:23900 tid:7016089497c0 ctx:0 INFO: cleanup@mem_pool.h:217] >> Successfully do cleanup, this->name:BufPool.
+[2025-06-04 11:30:21.634542 pid:23900 tid:7016089497c0 ctx:0 INFO: cleanup_util@init.cpp:225] >> Shutdown Cleanly!
