@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/map.h"
 #include "common/lang/string.h"
 #include "common/lang/memory.h"
+#include "storage/table/base_table.h"
 
 class Trx;
 class TrxKit;
@@ -85,8 +86,8 @@ public:
   RC drop_table(const char *dbname, const char *relation_name);
 
 public:
-  Db    *find_db(const char *dbname) const;
-  Table *find_table(const char *dbname, const char *table_name) const;
+  Db        *find_db(const char *dbname) const;
+  BaseTable *find_table(const char *dbname, const char *table_name) const;
 
   RC sync();
 

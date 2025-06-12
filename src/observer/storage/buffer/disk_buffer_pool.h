@@ -31,7 +31,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/memory.h"
 #include "common/lang/unordered_map.h"
 #include "common/mm/mem_pool.h"
-#include "common/sys/rc.h"
+#include "src/common/sys/rc.h"
 #include "common/types.h"
 #include "storage/buffer/frame.h"
 #include "storage/buffer/page.h"
@@ -351,5 +351,5 @@ private:
   common::Mutex                            lock_;
   unordered_map<string, DiskBufferPool *>  buffer_pools_;
   unordered_map<int32_t, DiskBufferPool *> id_to_buffer_pools_;
-  atomic<int32_t>                          next_buffer_pool_id_{1};  // 系统启动时，会打开所有的表，这样就可以知道当前系统最大的ID是多少了
+  atomic<int32_t> next_buffer_pool_id_{1};  // 系统启动时，会打开所有的表，这样就可以知道当前系统最大的ID是多少了
 };

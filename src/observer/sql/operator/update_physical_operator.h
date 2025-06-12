@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "sql/operator/physical_operator.h"
@@ -12,28 +13,28 @@ class UpdateStmt;
 class UpdatePhysicalOperator : public PhysicalOperator
 {
 public:
-  UpdatePhysicalOperator(Table *table, const Value& value, int value_offset) : table_(table), value_(value), value_offset_(value_offset) 
+  UpdatePhysicalOperator(
+      BaseTable *table, std::vector<FieldMeta> field_metas, std::vector<std::unique_ptr<Expression>> values)
+      : table_(table), field_metas_(std::move(field_metas)), values_(std::move(values))
   {}
 
-  virtual ~UpdatePhysicalOperator() = default;
+  ~UpdatePhysicalOperator() override = default;
 
-  PhysicalOperatorType type() const override
-  {
-    return PhysicalOperatorType::UPDATE;
-  }
+  PhysicalOperatorType type() const override { return PhysicalOperatorType::UPDATE; }
 
   RC open(Trx *trx) override;
   RC next() override;
   RC close() override;
 
-  Tuple *current_tuple() override
-  {
-    return nullptr;
-  }
+  Tuple *current_tuple() override { return nullptr; }
 
 private:
-  Table *table_ = nullptr;
-  const Value& value_;
-  int value_offset_;
-  Trx *trx_ = nullptr;
+  void rollback();
+
+  Trx                                     *trx_   = nullptr;
+  BaseTable                               *table_ = nullptr;
+  std::vector<FieldMeta>                   field_metas_;
+  std::vector<std::unique_ptr<Expression>> values_;
+  std::vector<Record>                      records_;
+  vector<pair<Record, Record>>             log_records;
 };

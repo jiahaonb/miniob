@@ -3,34 +3,23 @@
 #include "sql/operator/logical_operator.h"
 
 /**
- * @brief 逻辑算子，用于执行updaet语句
+ * @brief 逻辑算子，用于执行udpate语句
  * @ingroup LogicalOperator
  */
-class UpdateLogicalOperator : public LogicalOperator 
+class UpdateLogicalOperator : public LogicalOperator
 {
 public:
-  UpdateLogicalOperator(Table *table, const Value& value, int value_offset);
-  virtual ~UpdateLogicalOperator() = default;
+  explicit UpdateLogicalOperator(
+      BaseTable *table, std::vector<FieldMeta> field_metas, std::vector<std::unique_ptr<Expression>> values);
+  ~UpdateLogicalOperator() override = default;
 
-  LogicalOperatorType type() const override
-  {
-    return LogicalOperatorType::UPDATE;
-  }
-  Table *table() const
-  {
-    return table_;
-  }
-  const Value& value() const
-  {
-    return value_;
-  }
-  int value_offset() const
-  {
-    return value_offset_;
-  }
+  LogicalOperatorType                       type() const override { return LogicalOperatorType::UPDATE; }
+  BaseTable                                *table() const { return table_; }
+  std::vector<FieldMeta>                   &field_metas() { return field_metas_; }
+  std::vector<std::unique_ptr<Expression>> &values() { return values_; }
 
 private:
-  Table *table_ = nullptr;
-  const Value& value_;
-  int value_offset_ = 0;
+  BaseTable                               *table_ = nullptr;
+  std::vector<FieldMeta>                   field_metas_;
+  std::vector<std::unique_ptr<Expression>> values_;
 };

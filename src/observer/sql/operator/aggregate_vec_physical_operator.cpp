@@ -8,13 +8,14 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details. */
 
+#include <algorithm>
 #include "common/log/log.h"
-#include "common/lang/ranges.h"
 #include "sql/operator/aggregate_vec_physical_operator.h"
 #include "sql/expr/aggregate_state.h"
 #include "sql/expr/expression_tuple.h"
 #include "sql/expr/composite_tuple.h"
 
+using namespace std;
 using namespace common;
 
 AggregateVecPhysicalOperator::AggregateVecPhysicalOperator(vector<Expression *> &&expressions)
@@ -23,7 +24,7 @@ AggregateVecPhysicalOperator::AggregateVecPhysicalOperator(vector<Expression *> 
   value_expressions_.reserve(aggregate_expressions_.size());
 
   ranges::for_each(aggregate_expressions_, [this](Expression *expr) {
-    auto *      aggregate_expr = static_cast<AggregateExpr *>(expr);
+    auto       *aggregate_expr = static_cast<AggregateExpr *>(expr);
     Expression *child_expr     = aggregate_expr->child().get();
     ASSERT(child_expr != nullptr, "aggregation expression must have a child expression");
     value_expressions_.emplace_back(child_expr);
@@ -34,7 +35,7 @@ AggregateVecPhysicalOperator::AggregateVecPhysicalOperator(vector<Expression *> 
     ASSERT(expr->type() == ExprType::AGGREGATION, "expected an aggregation expression");
     auto *aggregate_expr = static_cast<AggregateExpr *>(expr);
 
-    if (aggregate_expr->aggregate_type() == AggregateExpr::Type::SUM) {
+    if (aggregate_expr->aggregate_type() == AggregateFunctionType::SUM) {
       if (aggregate_expr->value_type() == AttrType::INTS) {
         void *aggr_value                     = malloc(sizeof(SumState<int>));
         ((SumState<int> *)aggr_value)->value = 0;
@@ -69,7 +70,7 @@ RC AggregateVecPhysicalOperator::open(Trx *trx)
       value_expressions_[aggr_idx]->get_column(chunk_, column);
       ASSERT(aggregate_expressions_[aggr_idx]->type() == ExprType::AGGREGATION, "expect aggregate expression");
       auto *aggregate_expr = static_cast<AggregateExpr *>(aggregate_expressions_[aggr_idx]);
-      if (aggregate_expr->aggregate_type() == AggregateExpr::Type::SUM) {
+      if (aggregate_expr->aggregate_type() == AggregateFunctionType::SUM) {
         if (aggregate_expr->value_type() == AttrType::INTS) {
           update_aggregate_state<SumState<int>, int>(aggr_values_.at(aggr_idx), column);
         } else if (aggregate_expr->value_type() == AttrType::FLOATS) {
@@ -93,7 +94,7 @@ template <class STATE, typename T>
 void AggregateVecPhysicalOperator::update_aggregate_state(void *state, const Column &column)
 {
   STATE *state_ptr = reinterpret_cast<STATE *>(state);
-  T *    data      = (T *)column.data();
+  T     *data      = (T *)column.data();
   state_ptr->update(data, column.count());
 }
 

@@ -14,7 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
-#include "common/sys/rc.h"
+#include "src/common/sys/rc.h"
 #include "sql/parser/parse_defs.h"
 
 class Db;
@@ -39,6 +39,7 @@ class Db;
   DEFINE_ENUM_ITEM(DROP_TABLE)   \
   DEFINE_ENUM_ITEM(CREATE_INDEX) \
   DEFINE_ENUM_ITEM(DROP_INDEX)   \
+  DEFINE_ENUM_ITEM(SHOW_INDEX)   \
   DEFINE_ENUM_ITEM(SYNC)         \
   DEFINE_ENUM_ITEM(SHOW_TABLES)  \
   DEFINE_ENUM_ITEM(DESC_TABLE)   \
@@ -50,7 +51,9 @@ class Db;
   DEFINE_ENUM_ITEM(EXIT)         \
   DEFINE_ENUM_ITEM(EXPLAIN)      \
   DEFINE_ENUM_ITEM(PREDICATE)    \
-  DEFINE_ENUM_ITEM(SET_VARIABLE)
+  DEFINE_ENUM_ITEM(SET_VARIABLE) \
+  DEFINE_ENUM_ITEM(CREATE_VIEW)  \
+  DEFINE_ENUM_ITEM(DROP_VIEW)
 
 enum class StmtType
 {
@@ -86,8 +89,5 @@ public:
 
   virtual StmtType type() const = 0;
 
-public:
   static RC create_stmt(Db *db, ParsedSqlNode &sql_node, Stmt *&stmt);
-
-private:
 };

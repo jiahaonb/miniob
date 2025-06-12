@@ -98,10 +98,8 @@ RC Column::append(char *data, int count)
     LOG_WARN("append data to full column");
     return RC::INTERNAL;
   }
-  // Using a larger integer type to avoid overflow
-  size_t total_bytes = static_cast<size_t>(count) * static_cast<size_t>(attr_len_);
 
-  memcpy(data_ + count_ * attr_len_, data, total_bytes);
+  memcpy(data_ + count_ * attr_len_, data, count * attr_len_);
   count_ += count;
   return RC::SUCCESS;
 }

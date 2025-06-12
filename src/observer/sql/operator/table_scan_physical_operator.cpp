@@ -35,7 +35,10 @@ RC TableScanPhysicalOperator::next()
   bool filter_result = false;
   while (OB_SUCC(rc = record_scanner_.next(current_record_))) {
     LOG_TRACE("got a record. rid=%s", current_record_.rid().to_string().c_str());
-    
+
+    // 存储记录来自哪个表和 rid
+    tuple_.reset();
+    tuple_.append_base_rids(table_, current_record_.rid());
     tuple_.set_record(&current_record_);
     rc = filter(tuple_, filter_result);
     if (rc != RC::SUCCESS) {
@@ -70,11 +73,19 @@ void TableScanPhysicalOperator::set_predicates(vector<unique_ptr<Expression>> &&
 
 RC TableScanPhysicalOperator::filter(RowTuple &tuple, bool &result)
 {
-  RC    rc = RC::SUCCESS;
-  Value value;
+  RC          rc = RC::SUCCESS;
+  Value       value;
+  Tuple      *tp = &tuple;
+  JoinedTuple jt;
+  jt.set_left(&tuple);
+  jt.set_right(const_cast<Tuple *>(parent_tuple_));
+  if (parent_tuple_) {
+    tp = &jt;
+  }
   for (unique_ptr<Expression> &expr : predicates_) {
-    rc = expr->get_value(tuple, value);
+    rc = expr->get_value(*tp, value);
     if (rc != RC::SUCCESS) {
+      close();
       return rc;
     }
 

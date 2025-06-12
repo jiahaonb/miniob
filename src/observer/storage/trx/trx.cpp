@@ -12,6 +12,8 @@ See the Mulan PSL v2 for more details. */
 // Created by Wangyunlai on 2021/5/24.
 //
 
+#include <atomic>
+
 #include "common/lang/string.h"
 #include "common/log/log.h"
 #include "storage/field/field.h"
@@ -40,6 +42,6 @@ TrxKit *TrxKit::create(const char *name)
     delete trx_kit;
     trx_kit = nullptr;
   }
-  
+
   return trx_kit;
 }

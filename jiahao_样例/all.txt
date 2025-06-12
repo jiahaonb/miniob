@@ -2,12 +2,7 @@
 
 --- 创建表格
 
-CREATE TABLE jiahao (
-  id INT,
-  name CHAR(50),
-  age INT,
-  grade FLOAT
-);
+CREATE TABLE jiahao (id INT, name CHAR(50), age INT, grade FLOAT);
 
 --- 插入数据
 
@@ -19,3 +14,27 @@ INSERT INTO jiahao VALUES (4, 'Apo', 80, 66.0);
 --- 查看数据
 
 --- 更新数据
+
+
+==============================打开调试===============================
+
+cd /tmp/miniob && ./build/bin/observer -f /home/jiahao/Apolikefly/OceanBase/miniob/etc/observer.ini -s miniob.sock
+
+echo 'UPDATE jiahao SET age=99 WHERE id=2;' | /tmp/miniob/build/bin/obclient -s /tmp/miniob/miniob.sock
+
+python3 /home/jiahao/Apolikefly/OceanBase/miniob/test/case/miniob_test.py --test-cases=primary-drop-table --report-only
+
+===============================查看日志===========================
+
+ls -la /tmp/miniob/log/ 2>/dev/null || ls -la /tmp/miniob/ | grep log
+
+--- 监听log信息
+tail -f /tmp/miniob/observer.log.20250602 &
+
+echo "UPDATE Update_table_1 SET t_name='N01' WHERE id=1;" | /tmp/miniob/build/bin/obclient -s /tmp/miniob/miniob.sock
+
+
+=============================查看占用进程============================
+
+ps aux | grep observer
+

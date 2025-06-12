@@ -11,8 +11,11 @@ See the Mulan PSL v2 for more details. */
 // Created by wangyunlai.wyl on 2021/5/18.
 //
 
+#include <filesystem>
+
 #include "storage/common/meta_util.h"
-#include "common/lang/filesystem.h"
+
+using namespace std;
 
 string db_meta_file(const char *base_dir, const char *db_name)
 {
@@ -23,6 +26,11 @@ string db_meta_file(const char *base_dir, const char *db_name)
 string table_meta_file(const char *base_dir, const char *table_name)
 {
   return filesystem::path(base_dir) / (string(table_name) + TABLE_META_SUFFIX);
+}
+
+string vtable_meta_file(const char *base_dir, const char *table_name)
+{
+  return filesystem::path(base_dir) / (string(table_name) + VTABLE_META_SUFFIX);
 }
 
 string table_data_file(const char *base_dir, const char *table_name)

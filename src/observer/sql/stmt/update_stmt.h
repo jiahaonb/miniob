@@ -14,14 +14,11 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
-#include <string>
-#include "common/sys/rc.h"
+#include "src/common/sys/rc.h"
 #include "sql/stmt/stmt.h"
+#include "storage/field/field_meta.h"
 
-using namespace std;
-
-class Table;
-class Db;
+class BaseTable;
 class FilterStmt;
 
 /**
@@ -32,34 +29,21 @@ class UpdateStmt : public Stmt
 {
 public:
   UpdateStmt() = default;
-  UpdateStmt(Table *table, const Value &value, int value_offset, FilterStmt *filter_stmt);
-  // ~UpdateStmt() override;
+  UpdateStmt(BaseTable *table, std::vector<FieldMeta> field_metas, std::vector<std::unique_ptr<Expression>> values,
+      FilterStmt *filter_stmt);
 
   StmtType type() const override { return StmtType::UPDATE; }
 
-public:
-  static RC create(Db *db, const UpdateSqlNode &update, Stmt *&stmt);
+  BaseTable                                *table() const { return table_; }
+  std::vector<FieldMeta>                   &field_metas() { return field_metas_; }
+  std::vector<std::unique_ptr<Expression>> &values() { return values_; }
+  FilterStmt                               *filter_stmt() const { return filter_stmt_; }
 
-public:
-  Table *table() const { return table_; }
-  const string &attribute_name() const { return attribute_name_; }
-  const Value& value() const
-  {
-    return value_;
-  }
-    int value_offset() const
-  {
-    return value_offset_;
-  }
-  FilterStmt* filter_stmt() const 
-  {
-    return filter_stmt_;
-  }
+  static RC create(Db *db, UpdateSqlNode &update_sql, Stmt *&stmt);
 
 private:
-  Table *table_ = nullptr;
-  string attribute_name_;
-  Value value_;
-  int value_offset_ = 0; 
-  FilterStmt* filter_stmt_ = nullptr;
+  BaseTable                               *table_ = nullptr;
+  std::vector<FieldMeta>                   field_metas_;
+  std::vector<std::unique_ptr<Expression>> values_;
+  FilterStmt                              *filter_stmt_ = nullptr;
 };

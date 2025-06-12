@@ -9,5 +9,3 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details. */
 
 #include "oblsm/util/ob_bloomfilter.h"
-
-namespace oceanbase {}  // namespace oceanbase

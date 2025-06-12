@@ -11,6 +11,7 @@ See the Mulan PSL v2 for more details. */
 #pragma once
 
 #include "common/type/data_type.h"
+#include <common/value.h>
 
 /**
  * @brief 浮点型数据类型
@@ -29,6 +30,9 @@ public:
   RC multiply(const Value &left, const Value &right, Value &result) const override;
   RC divide(const Value &left, const Value &right, Value &result) const override;
   RC negative(const Value &val, Value &result) const override;
+
+  int cast_cost(AttrType type) override;
+  RC  cast_to(const Value &val, AttrType type, Value &result, bool allow_type_promotion = true) const override;
 
   RC set_value_from_str(Value &val, const string &data) const override;
 
